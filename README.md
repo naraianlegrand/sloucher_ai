@@ -9,7 +9,15 @@ glow and a small "Sit up" appears. Sit up and it's gone. Once an hour it gets yo
 
 Your video never leaves your laptop: each frame becomes 17 body points on the NPU and is then discarded.
 
-Website: https://sloucher.karthikeyanumesh.com
+## Website
+
+**[sloucher.karthikeyanumesh.com](https://sloucher.karthikeyanumesh.com)**: what Sloucher does, in English and French.
+
+- [How it was built](https://sloucher.karthikeyanumesh.com/story/): the SDK that quietly ran on the CPU, the model
+  that couldn't see me, and the NPU app that burned 7 CPU cores.
+- [Extra resources](https://sloucher.karthikeyanumesh.com/extra/): every measurement, and a checklist for building
+  your own app on the NPU.
+- [Privacy](https://sloucher.karthikeyanumesh.com/privacy/)
 
 ## Supported laptops
 
