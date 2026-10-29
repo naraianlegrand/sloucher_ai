@@ -40,34 +40,45 @@ RUN_KEY = r"Software\Microsoft\Windows\CurrentVersion\Run"
 # ---------------------------------------------------------------- the eyes (background thread)
 
 class Vision(threading.Thread):
-    """Camera -> NPU host -> posture, at FPS. Everything it learns goes to `events`."""
+    """Camera -> NPU host -> posture, at FPS. Everything it learns goes to `events`, tagged with `session`.
 
-    def __init__(self, settings, events):
+    Pause stops it, Resume starts a new one: the app ignores anything still arriving from an old session.
+    """
+
+    def __init__(self, settings, events, session):
         super().__init__(daemon=True)
-        self.settings, self.events = settings, events
+        self.settings, self.events, self.session = settings, events, session
         self.halt = threading.Event()
         self.want_calibration = threading.Event()
+
+    def emit(self, kind, *data):
+        if not self.halt.is_set():
+            self.events.put(("vision", self.session, kind, *data))
 
     def run(self):
         eng = engine.Engine(self.settings)
         try:
-            report = eng.open(progress=lambda text: self.events.put(("loading", text)))
-            self.events.put(("ready", report))
+            # Pausing during the ~40 s load cancels it at once (halt), so a quick Resume doesn't load twice
+            report = eng.open(progress=lambda text: self.emit("loading", text), cancel=self.halt)
+            self.emit("ready", report)
             w, h = report.input_wh
             post = posture.Posture(paths.calibration_file(), FPS)
-            self.events.put(("calibrated?", post.calibrated))
+            self.emit("calibrated?", post.calibrated)
             with camera.Camera(self.settings.get("camera", 0)) as cam:
                 self.loop(eng, cam, post, w, h)
+        except engine.Cancelled:
+            log.info("NPU loading cancelled")
         except engine.NpuError as e:
-            self.events.put(("fatal", str(e)))
+            self.emit("fatal", str(e))
         except camera.CameraError as e:
-            self.events.put(("fatal", f"{e}. Close other apps that use the camera, then choose Resume."))
+            self.emit("fatal", f"{e}. Close other apps that use the camera, then choose Resume.")
         except (ConnectionError, OSError) as e:
             if not self.halt.is_set():
                 log.exception("NPU host connection lost")
-                self.events.put(("fatal", f"The NPU host stopped ({e}). Choose Resume to start it again."))
+                self.emit("fatal", f"The NPU host stopped ({e}). Choose Resume to start it again.")
         finally:
             eng.close()
+            log.info("Camera and NPU released (session %s)", self.session)
 
     def loop(self, eng, cam, post, w, h):
         dead = 0
@@ -81,13 +92,13 @@ class Vision(threading.Thread):
             frame = cam.read()
             dead = dead + 1 if camera.looks_dead(frame) else 0
             if dead == DEAD_FRAMES:
-                self.events.put(("camera_dead",))
+                self.emit("camera_dead")
             if self.want_calibration.is_set():
                 self.want_calibration.clear()
                 post.calibrate()
             kps, ms = eng.infer(camera.to_model(frame, w, h))
             state, alert = post.update(kps, (frame.shape[1], frame.shape[0]))
-            self.events.put(("frame", int((kps[:, 0] >= 0).sum()), state, alert, ms))
+            self.emit("frame", int((kps[:, 0] >= 0).sum()), state, alert, ms)
 
     def stop(self):
         self.halt.set()
@@ -267,6 +278,7 @@ class App:
         self.glow = Glow(self.root)
         self.pill = Pill(self.root)
         self.vision = None
+        self.session = 0                   # which Vision's events count; older ones are ignored
         self.coach = self.new_coach()
         self.paused = False
         self.alerting = False
@@ -335,7 +347,8 @@ class App:
         self.root.mainloop()
 
     def start_vision(self):
-        self.vision = Vision(self.settings, self.events)
+        self.session += 1
+        self.vision = Vision(self.settings, self.events, self.session)
         self.vision.start()
         self.set_tray("away", status="Warming up the NPU...")
 
@@ -351,6 +364,10 @@ class App:
             self.root.after(250, self.poll)
 
     def handle(self, kind, *data):
+        if kind == "vision":
+            session, kind, *data = data
+            if self.vision is None or session != self.session:
+                return          # from a session that was paused or replaced: ignore
         if kind != "frame":
             log.info("event %s %s", kind, data)
         if kind == "frame":
@@ -378,8 +395,6 @@ class App:
             self.on_menu(data[0])
 
     def on_frame(self, visible, state, alert, ms):
-        if self.vision is None:
-            return              # a frame that arrived just after pausing
         present = visible >= PRESENT_KPS
         event = self.coach.update(time.monotonic(), present)
         if event:

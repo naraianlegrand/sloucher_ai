@@ -27,6 +27,10 @@ class NpuError(RuntimeError):
     """Something a person can act on; the message says what."""
 
 
+class Cancelled(Exception):
+    """Stopped on purpose (pause or quit) while the model was still loading."""
+
+
 @dataclass
 class Plan:
     """How to run the model on this laptop's NPU."""
@@ -155,8 +159,11 @@ class Host:
         self._exited.set()
         self._ready.set()
 
-    def wait_ready(self, timeout=LOAD_TIMEOUT):
-        self._ready.wait(timeout)
+    def wait_ready(self, timeout=LOAD_TIMEOUT, cancel=None):
+        end = time.monotonic() + timeout
+        while not self._ready.wait(0.25):
+            if (cancel and cancel.is_set()) or time.monotonic() > end:
+                break
         if self.report.ready and not self.report.on_npu:
             time.sleep(2)           # the provider's report can trail the ready line by a moment
         return self.report
@@ -179,7 +186,9 @@ class Host:
             raise ConnectionError(f"unexpected message {kind!r}")
         return wire.unpack_keypoints(payload)
 
-    def stop(self):
+    def stop(self, kill=False):
+        if kill and self.proc and self.proc.poll() is None:
+            self.proc.kill()            # still loading: nothing to say goodbye to
         if self.sock:
             try:
                 wire.send(self.sock, b"Q")
@@ -194,8 +203,11 @@ class Host:
                 self.proc.kill()
 
 
-def start(settings, selftest=False, progress=None):
-    """Start an NPU host that is proven to run on the NPU. -> (Host, Report). Raises NpuError."""
+def start(settings, selftest=False, progress=None, cancel=None):
+    """Start an NPU host that is proven to run on the NPU. -> (Host, Report).
+
+    Raises NpuError, or Cancelled as soon as `cancel` (a threading.Event) is set.
+    """
     p = plan(settings)
     tried = []
     for option in p.options:
@@ -203,7 +215,10 @@ def start(settings, selftest=False, progress=None):
         if progress:
             progress(f"Warming up the NPU ({name}, about 40 s)")
         host = Host(p, option).start(selftest=selftest)
-        report = host.wait_ready()
+        report = host.wait_ready(cancel=cancel)
+        if cancel and cancel.is_set():
+            host.stop(kill=True)
+            raise Cancelled()
         if selftest:
             report = host.wait_exit()
         if report.ready and report.on_npu and (selftest or host.connected()):
@@ -225,8 +240,8 @@ class Engine:
         self.host = None
         self.report = None
 
-    def open(self, progress=None):
-        self.host, self.report = start(self.settings, progress=progress)
+    def open(self, progress=None, cancel=None):
+        self.host, self.report = start(self.settings, progress=progress, cancel=cancel)
         return self.report
 
     def infer(self, rgb):
