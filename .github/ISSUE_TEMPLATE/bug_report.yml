@@ -1,0 +1,31 @@
+name: Bug report
+description: Something doesn't work the way it should
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Output of "Sloucher - check my laptop"
+      description: Start menu → "Sloucher - check my laptop" (or `python -m sloucher doctor`). Paste everything it prints.
+      render: text
+    validations:
+      required: true
+  - type: input
+    id: laptop
+    attributes:
+      label: Laptop and processor
+      placeholder: e.g. Lenovo ThinkPad, AMD Ryzen 7 7840U
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Sloucher version
+      placeholder: e.g. 0.1.0

@@ -1,0 +1,11 @@
+name: Idea, or "I can test on my laptop"
+description: Suggest a feature, or offer to test Sloucher on another NPU (Intel, Snapdragon, Ryzen AI 300, Mac)
+labels: [enhancement]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: The idea, or the laptop you can test on
+      description: For testing, include the laptop model and processor (Task Manager → Performance shows the NPU).
+    validations:
+      required: true
