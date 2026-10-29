@@ -3,6 +3,7 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/naraianlegrand/sloucher_ai/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/naraianlegrand/sloucher_ai?style=flat-square&color=FFD60A&labelColor=000000"></a>
   <a href="LICENSE"><img alt="Licence: AGPL-3.0" src="https://img.shields.io/badge/licence-AGPL--3.0-black?style=flat-square"></a>
   <a href="https://github.com/naraianlegrand/sloucher_ai/actions/workflows/tests.yml"><img alt="Tests" src="https://github.com/naraianlegrand/sloucher_ai/actions/workflows/tests.yml/badge.svg"></a>
   <img alt="Windows 11" src="https://img.shields.io/badge/Windows-11-black?style=flat-square">
@@ -11,7 +12,8 @@
 </p>
 
 <p align="center">
-  <a href="https://sloucher.karthikeyanumesh.com"><b>Website</b></a> ·
+  <a href="https://github.com/naraianlegrand/sloucher_ai/releases/latest"><b>Download</b></a> ·
+  <a href="https://sloucher.karthikeyanumesh.com">Website</a> ·
   <a href="https://sloucher.karthikeyanumesh.com/story/">How it was built</a> ·
   <a href="docs/INSTALL.md">Install</a> ·
   <a href="docs/PORTING.md">Bring it to your NPU</a>
@@ -84,7 +86,9 @@ your laptop model: a tester with real hardware is what moves a port forward. How
 
 ## Install
 
-Windows 11, AMD Ryzen 7040 or 8040, and AMD's Ryzen AI Software 1.6.1 (a one-time install from AMD).
+**[Download the latest installer](https://github.com/naraianlegrand/sloucher_ai/releases/latest)** (`SloucherSetup-x.y.z.exe`, 39 MB).
+
+You need Windows 11, an AMD Ryzen 7040 or 8040, and AMD's Ryzen AI Software 1.6.1 (a one-time install from AMD).
 Step by step: [docs/INSTALL.md](docs/INSTALL.md).
 
 ## Run from source

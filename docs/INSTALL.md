@@ -15,10 +15,12 @@ Sloucher's AI runs on AMD's NPU runtime, which AMD distributes itself.
 
 ## 2. Sloucher
 
-1. Run `SloucherSetup-0.1.0.exe`. No admin rights needed; it installs in about 15 seconds.
+1. Download `SloucherSetup-x.y.z.exe` from the [latest release](https://github.com/naraianlegrand/sloucher_ai/releases/latest) and run it. No admin rights
+   needed; it installs in about 15 seconds. The installer isn't code-signed yet, so Windows may say "Windows protected
+   your PC": click **More info → Run anyway**. You can check the download against the SHA-256 on the release page.
 2. Sloucher starts in the tray (Windows may hide it under **^** next to the clock; drag it onto the taskbar).
 3. The first start takes about 40 seconds while the model loads onto the NPU.
-4. Sit up tall and click **Calibrate**. That's it.
+4. Sit up tall, look at your screen the way you normally do (not at the camera), and click **Calibrate**. That's it.
 
 ## If something's wrong
 
@@ -32,6 +34,11 @@ runs a test on the NPU, and says what to fix.
 | "Needs calibration" | Sit up tall, tray menu → **Calibrate**. |
 
 Sloucher never falls back to the CPU: if the NPU isn't available, it stops and tells you.
+
+## Update
+
+Tray → **Quit**, run the new installer (it installs over the old version), then start Sloucher. Your settings and
+calibration are kept.
 
 ## Uninstall
 
