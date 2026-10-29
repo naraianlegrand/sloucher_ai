@@ -1,0 +1,13 @@
+{
+  "pose": {
+    "file": "yolov8n-pose_int8.onnx",
+    "sha256": "bc43166ee7997305d0ee9a85c54485c827d2069afd9c0ad1c251048896e1b58f",
+    "bytes": 3782412,
+    "source": "Ultralytics YOLOv8n-pose (AGPL-3.0), exported at 480x640 and quantized to INT8 (XINT8, AMD Quark) on seated desk frames; final decode kept in float",
+    "input": "images: 1x3x480x640 float RGB 0..1 (NCHW)",
+    "output": "output0: 1x56x6300 (box 4, person score 1, 17 COCO keypoints x, y, score in pixels)",
+    "runs_on": {
+      "amd-phoenix": "NPU 1042 / CPU 28 / VITIS_EP_CPU 10 operators, 1 subgraph actually running on NPU; ~12.4 ms (4x4), ~22 ms (1x4)"
+    }
+  }
+}

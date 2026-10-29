@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sloucher"
+version = "0.1.0"
+description = "An always-on posture coach that runs its AI on your laptop's NPU, not the CPU."
+readme = "README.md"
+license = "AGPL-3.0-only"
+license-files = ["LICENSE"]
+authors = [{ name = "Karthikeyan Umesh" }]
+requires-python = ">=3.11"
+# The app itself: camera, posture logic, tray and on-screen alerts. It never runs the model.
+# The model runs in the NPU host (src/sloucher/npu/host.py) inside the NPU vendor's own runtime,
+# which is installed separately (AMD: Ryzen AI Software 1.6.1). See docs/ARCHITECTURE.md.
+dependencies = [
+  "numpy>=1.26",
+  "opencv-python-headless>=4.10",
+  "pillow>=10",
+  "pystray>=0.19",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pyinstaller>=6.10"]
+
+[project.scripts]
+sloucher = "sloucher.__main__:main"
+
+[project.urls]
+Homepage = "https://sloucher.karthikeyanumesh.com"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+sloucher = ["assets/*", "npu/*.py"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

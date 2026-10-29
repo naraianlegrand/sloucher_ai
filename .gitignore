@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+
+# Build output
+build/
+dist/
+
+# Model files: shipped in the installer and (later) on Hugging Face, checked by models/manifest.json
+models/*.onnx
+
+# NPU compile caches the Vitis AI EP may write next to where it runs
+.cache/
+*_cache/
+*.vaip*
+
+# Never commit camera frames, clips or a calibration (they come from a real person)
+*.mp4
+*.npz
+calibration.json
