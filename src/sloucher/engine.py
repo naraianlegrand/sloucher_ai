@@ -37,7 +37,8 @@ class Plan:
     options: list = field(default_factory=list)     # one entry per attempt, best first
 
     def command(self, option, *extra):
-        return [self.python, "-u", os.path.join(paths.npu_dir(), "host.py"),
+        # -B: no __pycache__ in the install folder, which the uninstaller wouldn't know to remove
+        return [self.python, "-u", "-B", os.path.join(paths.npu_dir(), "host.py"),
                 "--backend", self.backend, "--model", self.model, *option, *extra]
 
 

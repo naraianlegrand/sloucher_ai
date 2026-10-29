@@ -45,7 +45,10 @@ def main(argv=None):
 
     if args.command == "doctor":
         from . import doctor
-        return doctor.run(settings, camera=not args.no_camera)
+        code = doctor.run(settings, camera=not args.no_camera)
+        if paths.frozen():
+            input("\nPress Enter to close.")      # opened from the Start menu: keep the window up
+        return code
     try:
         ctypes.windll.shcore.SetProcessDpiAwareness(2)      # real pixels on scaled displays
     except (AttributeError, OSError):
