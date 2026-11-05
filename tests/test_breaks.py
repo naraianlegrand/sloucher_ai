@@ -38,3 +38,31 @@ def test_simulated_hour():
 def test_short_timings_for_trying_it_out():
     events = simulate([(61, True), (12, False), (5, True)], BreakCoach(sit_limit=60, break_s=10))
     assert [e[1][0] for e in events] == ["walk_due", "break_done"]
+
+
+def test_i_walked_resets_the_clock():
+    c = BreakCoach(sit_limit=60, break_s=30)
+    events = simulate([(61, True)], c)
+    assert events[-1][1] == ("walk_due",) and c.due
+    c.walked(61)
+    assert not c.due and c.sitting(61) == 0
+    assert simulate([(1, True)], c) == []          # no "break_done" on the next frame either
+
+
+def test_snooze_puts_the_nudge_off():
+    c = BreakCoach(sit_limit=60, break_s=30, nudge_every=300)
+    simulate([(61, True)], c)
+    c.snooze(61, 600)
+    assert c.next_nudge == 661 and c.due
+
+
+def test_resume_keeps_the_sitting_clock():
+    # Sit 10 min, pause for 2 min (no frames), resume: still 12 min of sitting, no break counted
+    c = BreakCoach()
+    t = 0.0
+    while t < 600:
+        c.update(t, True)
+        t += 0.5
+    c.resume(720)
+    assert c.update(720, True) is None
+    assert c.sitting(720) == 720

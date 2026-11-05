@@ -1,6 +1,6 @@
 """Where things live, for the installed app and for a source checkout alike.
 
-- Your data (settings, calibration, logs): %LOCALAPPDATA%\\Sloucher. SLOUCHER_HOME overrides it (tests).
+- Your data (settings, calibration, stats, logs): %LOCALAPPDATA%\\Sloucher. SLOUCHER_HOME overrides it (tests).
 - The app's own files (model, NPU host scripts, assets): next to the .exe when installed,
   or in the repo when running from source.
 """
@@ -46,6 +46,11 @@ def data_dir():
 
 def calibration_file():
     return os.path.join(data_dir(), "calibration.json")
+
+
+def stats_dir():
+    """Posture stats, one CSV per month (numbers only)."""
+    return os.path.join(data_dir(), "stats")
 
 
 def log_dir():

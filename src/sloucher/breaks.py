@@ -7,6 +7,8 @@
 - Leaving for BREAK_S or longer is a break: the sitting clock resets. That also
   works if you get up on your own before the reminder.
 - Coming back early from a due break: "not done yet, N s left", and a sooner nudge.
+- If the camera missed the walk, "I walked" (walked()) counts it; snooze() delays the nudge.
+- A pause isn't a break: resume() picks the sitting clock up where it was.
 
 Pure logic: feed it (time, present) once per frame. The clock is passed in, so
 it can be tested without waiting an hour.
@@ -58,3 +60,17 @@ class BreakCoach:
             self.next_nudge = now + self.nudge_every
             return ("walk_nudge",)
         return None
+
+    def walked(self, now):
+        """You say you walked (the "I walked" button): the same as a break the camera saw."""
+        self.sit_start, self.last_seen, self.due, self.next_nudge = now, now, False, None
+
+    def snooze(self, now, seconds):
+        """Put the next nudge off; the walk stays due."""
+        if self.due:
+            self.next_nudge = now + seconds
+
+    def resume(self, now):
+        """After Pause -> Resume: the paused time counts as sitting, not as being away."""
+        if self.last_seen is not None:
+            self.last_seen = now
