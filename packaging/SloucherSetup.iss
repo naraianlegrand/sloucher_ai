@@ -3,7 +3,7 @@
 ; Checks the NPU and AMD Ryzen AI Software first, and says plainly what's missing.
 
 #define AppName "Sloucher"
-#define AppVersion "0.1.0"
+#define AppVersion "0.2.0"
 #define AppPublisher "Karthikeyan Umesh"
 #define AppURL "https://sloucher.karthikeyanumesh.com"
 #define RyzenAIVersion "1.6.1"

@@ -5,6 +5,23 @@ and versions follow [Semantic Versioning](https://semver.org).
 
 ## [Unreleased]
 
+### Added
+- **My stats** (tray menu, or double-click the icon): today's upright %, time slouched, alerts, how fast you sat up,
+  slouches you fixed yourself, and walks; the last 7 days with the change against the 7 before; your best and hardest
+  hour of the day ([#4](https://github.com/naraianlegrand/sloucher_ai/issues/4)).
+- **Copy for my AI coach** and **Export** (CSV + JSON) from the stats window
+  ([#12](https://github.com/naraianlegrand/sloucher_ai/issues/12)). Stats are numbers only, kept on your laptop; see
+  docs/STATS.md.
+- **Walk card:** the hourly reminder flashes the screen blue twice, then a card stays until you walk, with
+  **"I walked"** (if the camera missed it) and **Snooze 10 min**
+  ([#10](https://github.com/naraianlegrand/sloucher_ai/issues/10)).
+
+### Fixed
+- A walk taken with the screen locked (Win+L) wasn't seen. A locked screen now counts as away, and a lock of 30 s or
+  more counts as a walk ([#11](https://github.com/naraianlegrand/sloucher_ai/issues/11)).
+- Every glow now chimes, not just one a minute ([#1](https://github.com/naraianlegrand/sloucher_ai/issues/1)).
+- Pause -> Resume no longer restarts the sitting clock ([#3](https://github.com/naraianlegrand/sloucher_ai/issues/3)).
+
 ## [0.1.0] - 2026-10-29
 
 First public release, for Windows 11 laptops with an AMD Ryzen 7040 or 8040 (Phoenix, Hawk Point).

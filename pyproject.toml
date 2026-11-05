@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sloucher"
-version = "0.1.0"
+version = "0.2.0"
 description = "An always-on posture coach that runs its AI on your laptop's NPU, not the CPU."
 readme = "README.md"
 license = "AGPL-3.0-only"
