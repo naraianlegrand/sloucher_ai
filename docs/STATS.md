@@ -1,8 +1,8 @@
 # Your posture stats
 
 Sloucher keeps a few numbers about every minute you spend in the chair, so you can see how much you slouched, how
-quickly you sat up again, and whether you're improving. Open them from the tray: **My stats…** (or double-click the
-icon).
+quickly you sat up again, and whether you're improving. Open them from the tray: **Stats** (or double-click the
+icon). It refreshes itself every minute; **Refresh** updates it now.
 
 They're counted from the posture calls the NPU already makes, twice a second. There's no extra model, and nothing
 extra runs while the window is closed.

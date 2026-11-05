@@ -13,7 +13,8 @@ in mind: the most private settings by default, as little information as possible
   saved in `%LOCALAPPDATA%\Sloucher\stats`. They never leave your laptop on their own: "Copy for my AI coach" and
   "Export" only put them on your clipboard or in a folder you choose, and you decide whether to share them. Delete
   the folder and they're gone. What each number means: [STATS.md](STATS.md).
-- **You're in control.** Pause turns the camera and the NPU off until you resume. Quit stops everything.
+- **You're in control.** Pause turns the camera and the NPU off until you resume. Quit stops everything. While your
+  screen is locked, the camera is off.
 - **Logs** in `%LOCALAPPDATA%\Sloucher\logs` record what the app did (started, NPU ready, calibrated), never images
   or keypoints.
 

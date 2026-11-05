@@ -27,7 +27,7 @@ When you've slouched, leaned in or stared down at your phone for most of 30 seco
 small **"Sit up"** appears. Sit up, and it's gone. Once an hour, it gets you out of the chair, and it knows if you came
 back too early: *"Not done yet: 18 s left."* If it missed your walk, tick **"I walked"**.
 
-**My stats** shows how much you slouched today, how fast you sat up again, and whether this week beats the last. One
+**Stats** shows how much you slouched today, how fast you sat up again, and whether this week beats the last. One
 click copies a summary for your AI health coach.
 
 Your video never leaves your laptop: each frame becomes 17 body points on the NPU and is then thrown away.

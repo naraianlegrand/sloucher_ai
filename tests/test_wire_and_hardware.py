@@ -40,3 +40,13 @@ def test_provider_report_parsing():
     sub = engine.SUBGRAPH_RE.search("[Vitis AI EP] No. of Subgraphs :   NPU     1 Actually running on NPU      1")
     assert tuple(int(g) for g in ops.groups()) == (28, 1042, 10)
     assert int(sub.group(2)) == 1
+
+
+def test_saving_one_setting_keeps_the_others(tmp_path, monkeypatch):
+    from sloucher import paths
+    monkeypatch.setenv("SLOUCHER_HOME", str(tmp_path))
+    s = paths.load_settings()
+    s["sit_minutes"] = 2                  # a one-off from the command line
+    paths.save_setting("sound", False)    # the tray's Sound switch
+    saved = paths.load_settings()
+    assert saved["sound"] is False and saved["sit_minutes"] == 60

@@ -1,19 +1,21 @@
-"""The "My stats" window: today, the last 7 days, the trend, and a summary for an AI coach.
+"""The Stats window: today, the last 7 days, the trend, and a summary for an AI coach.
 
 Created when opened and destroyed when closed, so it costs nothing the rest of the time.
+Windows 11 Mica glass behind it (glass.py); it redraws every minute, or on Refresh.
 """
 import datetime as dt
 import logging
+import time
 import os
 import subprocess
 import tkinter as tk
 from tkinter import filedialog
 
-from . import __version__, paths, posture, stats
+from . import __version__, glass, paths, posture, stats
 
 log = logging.getLogger(__name__)
 
-BG, PANEL, INK, MUTED, FAINT = "#000000", "#141414", "#F7F7F5", "#A3A3A0", "#3A3A38"
+BG, PANEL, INK, MUTED, FAINT = glass.GLASS, glass.TILE, "#F7F7F5", "#B4B4B0", "#4A4A48"
 YELLOW = "#FFD60A"
 
 
@@ -25,7 +27,7 @@ class StatsWindow:
     def __init__(self, root, recorder):
         self.root, self.recorder = root, recorder
         self.win = tk.Toplevel(root)
-        self.win.title("My posture - Sloucher")
+        self.win.title("Stats - Sloucher")
         self.win.configure(bg=BG, padx=28, pady=24)
         self.win.resizable(False, False)
         try:
@@ -34,6 +36,9 @@ class StatsWindow:
             pass
         self.win.protocol("WM_DELETE_WINDOW", self.close)
         self.body = None
+        self.updated = None
+        self.glassy = glass.apply(self.win, "mica")
+        self.accent = glass.tint(YELLOW) if self.glassy else YELLOW
         self.draw()
         self.win.update_idletasks()
         w, h = self.win.winfo_width(), self.win.winfo_height()
@@ -49,6 +54,10 @@ class StatsWindow:
         return stats.load(paths.stats_dir(), self.recorder.pending() if self.recorder else ())
 
     def refresh(self):
+        """Redraw from the files plus the minute in progress; also runs once a minute on its own."""
+        if self.win is None:
+            return
+        self.win.after_cancel(self.refresh_job)
         self.draw()
         self.refresh_job = self.win.after(60_000, self.refresh)
 
@@ -78,7 +87,13 @@ class StatsWindow:
         rep = self.report = stats.report(self.rows())
         t = rep["today"]
 
-        self.label(b, "My posture", 22, weight="Black").pack(anchor="w")
+        head = tk.Frame(b, bg=BG)
+        head.pack(fill="x")
+        self.label(head, "Stats", 22, weight="Black").pack(side="left")
+        tk.Button(head, text="\u21bb  Refresh", font=("Segoe UI", 10), bg=PANEL, fg=INK, relief="flat",
+                  activebackground="#3A3A38", activeforeground=INK, padx=12, pady=3, cursor="hand2",
+                  command=self.refresh).pack(side="right", pady=(6, 0))
+        self.label(head, f"Updated {time.strftime('%H:%M')}", 9, MUTED).pack(side="right", padx=10, pady=(6, 0))
         self.label(b, "Today", 10, MUTED, "Semibold").pack(anchor="w", pady=(14, 4))
 
         tiles = tk.Frame(b, bg=BG)
@@ -94,7 +109,7 @@ class StatsWindow:
         ]):
             cell = tk.Frame(tiles, bg=PANEL, padx=12, pady=8)
             cell.grid(row=0, column=i, padx=(0 if i == 0 else 6, 0), sticky="nsew")
-            self.label(cell, value, 16, YELLOW if i == 0 else INK, "Semibold").pack(anchor="w")
+            self.label(cell, value, 16, self.accent if i == 0 else INK, "Semibold").pack(anchor="w")
             self.label(cell, caption, 9, MUTED).pack(anchor="w")
 
         trend = []
@@ -122,12 +137,12 @@ class StatsWindow:
 
         row = tk.Frame(b, bg=BG)
         row.pack(anchor="w", pady=(20, 0))
-        tk.Button(row, text="Copy for my AI coach", font=("Segoe UI Semibold", 11), bg=YELLOW, fg="#000000",
+        tk.Button(row, text="Copy for my AI coach", font=("Segoe UI Semibold", 11), bg=self.accent, fg="#000000",
                   relief="flat", activebackground="#FFE45C", padx=16, pady=6, cursor="hand2",
                   command=self.copy).pack(side="left")
         for text, cmd in (("Export…", self.export), ("Open stats folder", self.folder)):
             tk.Button(row, text=text, font=("Segoe UI", 11), bg=BG, fg=MUTED, relief="flat",
-                      activebackground="#1C1C1C", activeforeground=INK, padx=12, pady=6, cursor="hand2",
+                      activebackground=PANEL, activeforeground=INK, padx=12, pady=6, cursor="hand2",
                       command=cmd).pack(side="left", padx=(8, 0))
         self.note = self.label(b, "Numbers only, kept on this laptop. Nothing is sent anywhere unless you paste "
                                   "or share it.", 9, MUTED, wraplength=520, justify="left")
@@ -153,7 +168,7 @@ class StatsWindow:
                 cv.create_line(cx - bw / 4, base - 2, cx + bw / 4, base - 2, fill=FAINT, width=2)
                 continue
             y = base - (base - top) * pct / 100
-            bar = cv.create_rectangle(cx - bw / 2, y, cx + bw / 2, base, fill=YELLOW, outline="")
+            bar = cv.create_rectangle(cx - bw / 2, y, cx + bw / 2, base, fill=self.accent, outline="")
             info = f"{d:%a %b %d}: {pct}% upright, {stats.hours_text(s['sitting_min'])} sitting, " \
                    f"{int(s['alerts'])} alerts, {s['walks_done']} walks"
             if d == today:

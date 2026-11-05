@@ -106,3 +106,11 @@ def load_settings():
 def save_settings(s):
     with open(settings_file(), "w", encoding="utf-8") as f:
         json.dump({k: s[k] for k in DEFAULTS if k in s}, f, indent=2)
+
+
+def save_setting(key, value):
+    """Change one saved setting. The rest of the file stays as it was, so a one-off
+    `--sit-minutes 2` from the command line never becomes permanent."""
+    s = load_settings()
+    s[key] = value
+    save_settings(s)

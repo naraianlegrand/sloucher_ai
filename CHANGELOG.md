@@ -6,7 +6,7 @@ and versions follow [Semantic Versioning](https://semver.org).
 ## [Unreleased]
 
 ### Added
-- **My stats** (tray menu, or double-click the icon): today's upright %, time slouched, alerts, how fast you sat up,
+- **Stats** (tray menu, or double-click the icon): today's upright %, time slouched, alerts, how fast you sat up,
   slouches you fixed yourself, and walks; the last 7 days with the change against the 7 before; your best and hardest
   hour of the day ([#4](https://github.com/naraianlegrand/sloucher_ai/issues/4)).
 - **Copy for my AI coach** and **Export** (CSV + JSON) from the stats window
@@ -15,10 +15,16 @@ and versions follow [Semantic Versioning](https://semver.org).
 - **Walk card:** the hourly reminder flashes the screen blue twice, then a card stays until you walk, with
   **"I walked"** (if the camera missed it) and **Snooze 10 min**
   ([#10](https://github.com/naraianlegrand/sloucher_ai/issues/10)).
+- Windows 11 look: Mica glass behind Stats, frosted Acrylic behind the walk card, dark title bar, rounded corners.
+  Stats has a **Refresh** button (it also refreshes itself every minute).
+- The camera turns off while the screen is locked, and back on when you unlock (the NPU stays ready).
 
 ### Fixed
 - A walk taken with the screen locked (Win+L) wasn't seen. A locked screen now counts as away, and a lock of 30 s or
-  more counts as a walk ([#11](https://github.com/naraianlegrand/sloucher_ai/issues/11)).
+  more counts as a walk, also after the display turns off
+  ([#11](https://github.com/naraianlegrand/sloucher_ai/issues/11)).
+- Turning Sound on or off while running with `--sit-minutes` saved those test timings for good; now only Sound is
+  saved.
 - Every glow now chimes, not just one a minute ([#1](https://github.com/naraianlegrand/sloucher_ai/issues/1)).
 - Pause -> Resume no longer restarts the sitting clock ([#3](https://github.com/naraianlegrand/sloucher_ai/issues/3)).
 

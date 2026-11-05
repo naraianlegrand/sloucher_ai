@@ -7,7 +7,7 @@
 - Once an hour in the chair: the screen flashes blue and a card says "Time for a 30 s walk",
   with "I walked" and "Snooze". Back too early: "Not done yet: 18 s left". Locking the screen
   for 30 s or more counts as a walk.
-- Every minute in the chair adds a row to your stats (numbers only): see stats.py and "My stats".
+- Every minute in the chair adds a row to your stats (numbers only): see stats.py and the Stats window.
 - Tray menu: my stats, calibrate, pause (camera and NPU off), sound, start with Windows, quit.
 """
 import ctypes
@@ -23,7 +23,7 @@ import winsound
 
 import pystray
 
-from . import APP_NAME, breaks, camera, engine, icon, paths, posture, stats, statswindow
+from . import APP_NAME, breaks, camera, engine, glass, icon, paths, posture, stats, statswindow
 
 log = logging.getLogger(__name__)
 
@@ -55,6 +55,7 @@ class Vision(threading.Thread):
         self.settings, self.events, self.session = settings, events, session
         self.halt = threading.Event()
         self.want_calibration = threading.Event()
+        self.camera_off = threading.Event()        # set while the screen is locked
 
     def emit(self, kind, *data):
         if not self.halt.is_set():
@@ -94,6 +95,25 @@ class Vision(threading.Thread):
             next_t = max(next_t + 1 / FPS, time.monotonic())
             if self.halt.is_set():
                 break
+            if self.camera_off.is_set():
+                # Screen locked: the camera light goes off; the NPU stays loaded for a quick start on unlock
+                cam.close()
+                log.info("Camera off while the screen is locked")
+                while self.camera_off.is_set() and not self.halt.is_set():
+                    self.halt.wait(0.5)
+                if self.halt.is_set():
+                    break
+                for attempt in range(5):
+                    try:
+                        cam.open()
+                        break
+                    except camera.CameraError:
+                        if attempt == 4:
+                            raise
+                        self.halt.wait(1.0)
+                log.info("Camera back on")
+                next_t = time.monotonic()
+                continue
             frame = cam.read()
             dead = dead + 1 if camera.looks_dead(frame) else 0
             if dead == DEAD_FRAMES:
@@ -241,14 +261,34 @@ class CalibrateWindow:
         self.win.destroy()
 
 
+class _WtsInfoLevel1(ctypes.Structure):
+    _fields_ = [("SessionId", ctypes.c_ulong), ("SessionState", ctypes.c_int), ("SessionFlags", ctypes.c_long),
+                ("WinStationName", ctypes.c_wchar * 33), ("UserName", ctypes.c_wchar * 21),
+                ("DomainName", ctypes.c_wchar * 18), ("LogonTime", ctypes.c_longlong),
+                ("ConnectTime", ctypes.c_longlong), ("DisconnectTime", ctypes.c_longlong),
+                ("LastInputTime", ctypes.c_longlong), ("CurrentTime", ctypes.c_longlong),
+                ("Counters", ctypes.c_ulong * 6)]
+
+
+class _WtsInfoEx(ctypes.Structure):
+    _fields_ = [("Level", ctypes.c_ulong), ("Data", _WtsInfoLevel1)]
+
+
 def screen_locked():
-    """True while Windows shows the lock screen (Win+L): the input desktop can't be opened then."""
-    user32 = ctypes.windll.user32
-    desk = user32.OpenInputDesktop(0, False, 0x0100)        # DESKTOP_SWITCHDESKTOP
-    if not desk:
-        return True
-    user32.CloseDesktop(desk)
-    return False
+    """True while this Windows session is locked (Win+L), also once the display has turned off.
+
+    Asks the session itself (WTSSessionInfoEx). Checking the input desktop instead only works while
+    the lock screen is showing: once the screen goes black it reads "unlocked" again (seen in testing).
+    """
+    wts = ctypes.windll.wtsapi32
+    buf, size = ctypes.c_void_p(), ctypes.c_ulong()
+    if not wts.WTSQuerySessionInformationW(None, ctypes.c_ulong(0xFFFFFFFF), 25, ctypes.byref(buf), ctypes.byref(size)):
+        return False                    # can't tell: assume unlocked, the camera still decides
+    try:
+        info = ctypes.cast(buf, ctypes.POINTER(_WtsInfoEx)).contents
+        return info.Level == 1 and info.Data.SessionFlags == 0          # WTS_SESSIONSTATE_LOCK
+    finally:
+        wts.WTSFreeMemory(buf)
 
 
 def work_area():
@@ -308,24 +348,24 @@ class WalkCard:
         self.win = win = tk.Toplevel(self.root)
         win.overrideredirect(True)
         win.attributes("-topmost", True)
-        win.configure(bg=INK, padx=20, pady=16, highlightthickness=1, highlightbackground="#2A2A28")
-        head = tk.Frame(win, bg=INK)
+        win.configure(bg=glass.GLASS, padx=22, pady=18)
+        head = tk.Frame(win, bg=glass.GLASS)
         head.pack(anchor="w")
-        dot = tk.Canvas(head, width=12, height=12, bg=INK, highlightthickness=0)
+        dot = tk.Canvas(head, width=12, height=12, bg=glass.GLASS, highlightthickness=0)
         dot.create_oval(1, 1, 11, 11, fill=BLUE, outline="")
         dot.pack(side="left", padx=(0, 10))
-        self.title = tk.Label(head, font=("Segoe UI Semibold", 13), fg="#F7F7F5", bg=INK)
+        self.title = tk.Label(head, font=("Segoe UI Semibold", 13), fg="#F7F7F5", bg=glass.GLASS)
         self.title.pack(side="left")
-        self.detail = tk.Label(win, font=("Segoe UI", 10), fg="#A3A3A0", bg=INK, justify="left")
+        self.detail = tk.Label(win, font=("Segoe UI", 10), fg="#C8C8C4", bg=glass.GLASS, justify="left")
         self.detail.pack(anchor="w", pady=(4, 12))
-        row = tk.Frame(win, bg=INK)
+        row = tk.Frame(win, bg=glass.GLASS)
         row.pack(anchor="w")
         self.walked_btn = tk.Button(row, text="\u2713  I walked", font=("Segoe UI Semibold", 11), bg=BLUE,
                                     fg="#000000", relief="flat", activebackground="#9BE3FF", padx=14, pady=5,
                                     cursor="hand2", command=self.on_walked)
         self.walked_btn.pack(side="left")
-        self.snooze_btn = tk.Button(row, text="Snooze 10 min", font=("Segoe UI", 11), bg=INK, fg="#A3A3A0",
-                                    relief="flat", activebackground="#1C1C1C", activeforeground="#F7F7F5",
+        self.snooze_btn = tk.Button(row, text="Snooze 10 min", font=("Segoe UI", 11), bg=glass.TILE, fg="#F7F7F5",
+                                    relief="flat", activebackground="#3A3A38", activeforeground="#F7F7F5",
                                     padx=12, pady=5, cursor="hand2", command=self.on_snooze)
         self.snooze_btn.pack(side="left", padx=(8, 0))
         # No focus and no taskbar button, but (unlike the glow) clicks land on it
@@ -333,6 +373,9 @@ class WalkCard:
         hwnd = ctypes.windll.user32.GetParent(win.winfo_id())
         style = ctypes.windll.user32.GetWindowLongW(hwnd, -20)
         ctypes.windll.user32.SetWindowLongW(hwnd, -20, style | 0x80 | 0x08000000)    # TOOLWINDOW | NOACTIVATE
+        if glass.apply(win, "acrylic"):           # frosted glass and rounded corners (Windows 11)
+            self.walked_btn.configure(bg=glass.tint(BLUE, 0x50))      # Acrylic is lighter than Mica
+            dot.itemconfigure(1, fill=glass.tint(BLUE, 0x50))
 
     def _place(self):
         self.win.update_idletasks()
@@ -411,7 +454,7 @@ class App:
         self.tray = pystray.Icon(APP_NAME, self.tray_image("away", False), APP_NAME, menu=pystray.Menu(
             pystray.MenuItem(lambda _: self.status, None, enabled=False),
             pystray.Menu.SEPARATOR,
-            pystray.MenuItem("My stats\u2026", lambda: self.events.put(("menu", "stats")), default=True),
+            pystray.MenuItem("Stats",lambda: self.events.put(("menu", "stats")), default=True),
             pystray.MenuItem("Calibrate (sit up tall first)", lambda: self.events.put(("menu", "calibrate"))),
             pystray.MenuItem(lambda _: "Resume" if self.paused else "Pause",
                              lambda: self.events.put(("menu", "pause"))),
@@ -469,6 +512,8 @@ class App:
     def start_vision(self):
         self.session += 1
         self.vision = Vision(self.settings, self.events, self.session)
+        if self.locked_since is not None:
+            self.vision.camera_off.set()
         self.vision.start()
         self.set_tray("away", status="Warming up the NPU...")
 
@@ -493,11 +538,15 @@ class App:
         if locked and self.locked_since is None:
             self.locked_since = now
             self.stats.gap()
+            if self.vision:
+                self.vision.camera_off.set()
             log.info("Screen locked")
         elif not locked and self.locked_since is not None:
             self.last_lock_s = now - self.locked_since
             self.locked_since = None
             self.stats.gap()
+            if self.vision:
+                self.vision.camera_off.clear()
             log.info("Screen unlocked after %.0f s", self.last_lock_s)
 
     def handle(self, kind, *data):
@@ -640,6 +689,7 @@ class App:
             self.walk_done("ticked", sat)
         elif item == "snooze":
             self.coach.snooze(time.monotonic(), SNOOZE_S)
+            log.info("walk snoozed for %d min", SNOOZE_S // 60)
             self.stats.snoozed()
             self.card.hide()
             self.pill.show("OK, I'll remind you in 10 min", BLUE, 4)
@@ -650,7 +700,7 @@ class App:
                 self.stats_window = statswindow.StatsWindow(self.root, self.stats)
         elif item == "sound":
             self.settings["sound"] = not self.settings["sound"]
-            paths.save_settings(self.settings)
+            paths.save_setting("sound", self.settings["sound"])
             self.tray.update_menu()
         elif item == "autostart":
             set_autostart(not autostart_enabled())

@@ -42,7 +42,8 @@ No camera frames are ever written to disk.
 | `posture.py` | app | metrics vs your baseline, 30 s alert rule, calibration |
 | `breaks.py` | app | hourly walk logic, "I walked", snooze |
 | `stats.py` | app | per-minute posture stats, day / week report, coach summary, export |
-| `statswindow.py` | app | the "My stats" window |
+| `statswindow.py` | app | the Stats window |
+| `glass.py` | app | Windows 11 Mica / Acrylic behind the Stats window and the walk card |
 | `engine.py` | app | plans and starts the NPU host, checks the NPU report |
 | `hardware.py` | app | NPU from the registry (ComputeAccelerator class), Ryzen AI install and Python |
 | `doctor.py` | app | the checklist |
