@@ -30,9 +30,12 @@ def test_simulated_hour():
         (40, False),              # a walk on my own before the reminder
         (59 * 60, True),          # 59 min: no reminder, because my own walk reset the clock
     ])
-    assert [e[1][0] for e in events] == ["walk_due", "walk_nudge", "not_done", "walk_nudge", "break_done"]
+    assert [e[1][0] for e in events] == ["walk_due", "walk_nudge", "not_done", "walk_nudge", "break_done",
+                                         "break_taken"]
     assert events[0][0] == 3600             # the 3 s drop didn't pause the clock
     assert events[2][1] == ("not_done", 18)
+    assert round(events[4][1][1]) == 3600 + 6 * 60 + 12 + 70     # sat that long before the 45 s walk
+    assert round(events[5][1][1]) == 10 + 20 * 60                 # the walk on my own, after 20 min 10 s
 
 
 def test_short_timings_for_trying_it_out():
@@ -63,6 +66,16 @@ def test_resume_keeps_the_sitting_clock():
     while t < 600:
         c.update(t, True)
         t += 0.5
-    c.resume(720)
-    assert c.update(720, True) is None
-    assert c.sitting(720) == 720
+    # The NPU warms up for ~40 s after Resume, so the first frame comes at 760 s
+    c.resume()
+    assert c.update(760, True) is None
+    assert c.sitting(760) == 760
+
+
+def test_a_real_break_after_resume_still_counts():
+    c = BreakCoach()
+    for i in range(1200):
+        c.update(i * 0.5, True)
+    c.resume()
+    c.update(700, False)                # first frame after Resume: chair empty
+    assert c.update(740, True)[0] == "break_taken"

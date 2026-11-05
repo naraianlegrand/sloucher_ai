@@ -85,12 +85,11 @@ def test_walks(tmp_path):
 
 def week_of_rows(folder):
     """Two weeks: the first 60% upright, the second 75%, slouching in the afternoon."""
-    clock = Clock(d=1, h=0)
+    clock = Clock()
     rec = stats.Recorder(folder, clock)
-    for day in range(1, 15):
+    for day in range(1, 15):          # Oct 23 .. Nov 5
         for h in (10, 15):
-            clock.t = dt.datetime(2026, 10, 22 + day if day < 10 else 1, h).timestamp() if False else \
-                (dt.datetime(2026, 10, 22, h) + dt.timedelta(days=day)).timestamp()
+            clock.t = (dt.datetime(2026, 10, 22, h) + dt.timedelta(days=day)).timestamp()
             good = 0.75 if day > 7 else 0.6
             if h == 15:
                 good -= 0.2

@@ -29,6 +29,7 @@ class BreakCoach:
         self.last_seen = None       # last time a person was in the frame
         self.due = False            # walk reminder active
         self.next_nudge = None
+        self.resumed = False        # set by resume(): the next frame picks the clock up again
 
     def sitting(self, now):
         """Seconds of the current sitting stretch (0 when nobody has sat down yet)."""
@@ -38,16 +39,23 @@ class BreakCoach:
         return self.last_seen is not None and now - self.last_seen >= self.away_grace
 
     def update(self, now, present):
-        """-> None or an event: ("walk_due",), ("walk_nudge",), ("not_done", seconds_left), ("break_done",)."""
+        """-> None or an event: ("walk_due",), ("walk_nudge",), ("not_done", seconds_left),
+        ("break_done", sat_s) after a reminder, ("break_taken", sat_s) for a break on your own.
+        sat_s is how long you'd been sitting before the break."""
+        if self.resumed:
+            # First frame after Resume (the NPU takes ~40 s to warm up): the pause wasn't time away
+            self.resumed = False
+            if self.last_seen is not None:
+                self.last_seen = now
         if not present:
             return None
         event = None
         gap = 0.0 if self.last_seen is None else now - self.last_seen
+        if self.sit_start is not None and gap >= self.break_s:
+            # Back from a full break
+            event = ("break_done" if self.due else "break_taken", self.last_seen - self.sit_start)
         self.last_seen = now
         if self.sit_start is None or gap >= self.break_s:
-            # First sit-down, or back from a full break
-            if self.due:
-                event = ("break_done",)
             self.sit_start, self.due, self.next_nudge = now, False, None
             return event
         if gap >= self.away_grace and self.due:
@@ -70,7 +78,6 @@ class BreakCoach:
         if self.due:
             self.next_nudge = now + seconds
 
-    def resume(self, now):
-        """After Pause -> Resume: the paused time counts as sitting, not as being away."""
-        if self.last_seen is not None:
-            self.last_seen = now
+    def resume(self):
+        """After Pause -> Resume: the paused time (and the NPU warm-up) counts as sitting, not as being away."""
+        self.resumed = True
