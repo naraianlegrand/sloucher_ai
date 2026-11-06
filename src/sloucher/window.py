@@ -1,8 +1,8 @@
 """The Sloucher window: Stats and Settings tabs, in smoked glass.
 
 - Stats: today, the last 7 days, the trend, and a summary for an AI coach.
-- Settings: how strict the posture check is (the slider), the walk reminder, sound, start with
-  Windows, recalibrate. Changes apply at once and are saved; nothing needs a restart.
+- Settings: calibration, sound, the walk reminder, start with Windows, your data; under Advanced
+  (closed by default), how strict the posture check is. Changes apply at once and are saved.
 
 No title bar (glass.py): drag the window by any empty spot; the glass x or Esc closes it. Every
 tile, bar and control is a glass piece on one canvas (liquid.py). The window is created when
@@ -57,6 +57,8 @@ class Window:
         glass.frame(self.win, titlebar=False)
         self.note_text = None
         self.refresh_job = None
+        self.advanced = False           # Settings: on the Advanced page (opened from its row)
+        self.main_h = 0                 # height of the main Settings page, so Advanced doesn't shrink the window
         self.draw()
         self.win.update_idletasks()
         w, h = self.win.winfo_width(), self.win.winfo_height()
@@ -77,6 +79,7 @@ class Window:
 
     def show(self, tab):
         self.tab = tab
+        self.advanced = False
         self.note_text = None
         self.draw()
         self.win.deiconify()
@@ -148,7 +151,7 @@ class Window:
                 items.append(self.tile(sx, y + 4, seg_w, h, h / 2, level=1.9))
             items.append(self.text(sx + seg_w / 2, y + 4 + h / 2, name, 10, INK if name == self.tab else MUTED,
                                    "Semibold", anchor="center"))
-            if name != self.tab:
+            if name != self.tab or self.advanced:
                 self.clickable(items, lambda n=name: self.show(n))
 
     def section(self, y, title):
@@ -248,51 +251,99 @@ class Window:
         self.draw()
 
     def draw_settings(self, y):
-        s = self.settings
-        pw = W - 2 * M
+        """Everyday settings first; posture strictness sits under Advanced, closed by default.
 
-        # Posture: the strictness slider
-        y = self.section(y, "Posture")
-        self.tile(M, y, pw, 214, 24)
-        level = int(s.get("strictness", posture.NORMAL))
-        name, drop_th, face_th, meaning = posture.STRICTNESS[level]
-        self.text(M + 22, y + 18, "How strict", 12, INK, "Semibold")
-        self.text(W - M - 22, y + 18, name, 12, YELLOW, "Semibold", anchor="ne")
-        self.slider(M + 34, W - M - 34, y + 66, level)
-        self.text(M + 22, y + 88, "Relaxed", 9, MUTED)
-        self.text(W - M - 22, y + 88, "Strict", 9, MUTED, anchor="ne")
-        self.text(M + 22, y + 112, f"{meaning} Alerts when your eyes drop {round(100 * (1 - drop_th))}% "
-                                   f"below your calibration, or you lean in {round(100 * (face_th - 1))}%.",
-                  10, INK, width=pw - 44)
-        self.button(M + 22, y + 162, "Recalibrate (sit up tall first)", self.on_calibrate, h=34, size=10,
-                    weight="")
-        y += 214 + 22
-
-        # Walk reminder
+        Each row: a name, one line of help, and its control on the right.
+        """
+        if self.advanced:
+            return self.draw_advanced_page(y)
+        st = self.settings
         blue = liquid.rgb(BLUE)
-        y = self.section(y, "Walk reminder")
-        self.tile(M, y, pw, 122, 24)
-        self.text(M + 22, y + 24, "Remind me after", 11, INK)
-        self.choices(W - M - 18, y + 16, [f"{m} min" for m in SIT_CHOICES], SIT_CHOICES,
-                     s.get("sit_minutes"), lambda v: self.set("sit_minutes", v), blue)
-        self.text(M + 22, y + 78, "A walk is at least", 11, INK)
-        self.choices(W - M - 18, y + 70, ["30 s", "1 min", "2 min"], BREAK_CHOICES,
-                     s.get("break_seconds"), lambda v: self.set("break_seconds", v), blue)
-        y += 122 + 22
 
-        # App
-        y = self.section(y, "App")
-        self.tile(M, y, pw, 108, 24)
-        self.text(M + 22, y + 22, "Sound", 11, INK)
-        self.switch(W - M - 22, y + 16, bool(s.get("sound")), lambda on: self.set("sound", on))
-        self.text(M + 22, y + 70, "Start with Windows", 11, INK)
-        self.switch(W - M - 22, y + 64, winsys.autostart_enabled(), lambda on: self.set("autostart", on))
-        y += 108 + 18
+        y = self.group(y, "Posture", [
+            ("Calibration", "Teach Sloucher your upright posture.",
+             lambda r, m: self.button(r, m - 17, "Recalibrate", self.on_calibrate, anchor="ne", h=34, size=10,
+                                      weight="")),
+            ("Alert sound", "A soft chime when the screen edges glow.",
+             lambda r, m: self.switch(r, m - 14, bool(st.get("sound")), lambda on: self.set("sound", on))),
+        ])
+        y = self.group(y, "Walk reminder", [
+            ("Remind me after", "Time in the chair before the reminder.",
+             lambda r, m: self.choices(r, m - 16, [f"{v} min" for v in SIT_CHOICES], SIT_CHOICES,
+                                       st.get("sit_minutes"), lambda v: self.set("sit_minutes", v), blue)),
+            ("Counts as a walk after", "Time away from the chair.",
+             lambda r, m: self.choices(r, m - 16, ["30 s", "1 min", "2 min"], BREAK_CHOICES,
+                                       st.get("break_seconds"), lambda v: self.set("break_seconds", v), blue)),
+        ])
+        y = self.group(y, "General", [
+            ("Start with Windows", "Sloucher starts quietly in the tray.",
+             lambda r, m: self.switch(r, m - 14, winsys.autostart_enabled(), lambda on: self.set("autostart", on))),
+            ("Your data", "Kept on this laptop, nowhere else.",
+             lambda r, m: self.button(r, m - 17, "Open folder",
+                                      lambda: subprocess.Popen(["explorer", paths.data_dir()]),
+                                      anchor="ne", h=34, size=10, weight="")),
+        ])
+        self.main_h = self.draw_advanced_row(y)
+        return self.main_h
 
-        self.text(M, y + 10, "Changes apply at once and are saved on this laptop.", 9, MUTED)
-        self.button(W - M, y, "Open data folder", lambda: subprocess.Popen(["explorer", paths.data_dir()]),
-                    anchor="ne", h=34, size=10, weight="")
-        return y + 56
+    def group(self, y, title, rows):
+        """A titled glass panel of rows, with a hairline between them."""
+        y = self.section(y, title)
+        rh, pw = 68, W - 2 * M
+        self.tile(M, y, pw, rh * len(rows), 22)
+        for i, (name, helper, control) in enumerate(rows):
+            ry = y + i * rh
+            if i:
+                self.cv.create_line(self.px(M + 22), self.px(ry), self.px(W - M - 22), self.px(ry), fill="#2C2C2A")
+            self.text(M + 22, ry + 14, name, 11, INK)
+            self.text(M + 22, ry + 36, helper, 9, MUTED, width=250)
+            control(W - M - 20, ry + rh / 2)
+        return y + rh * len(rows) + 22
+
+    def draw_advanced_row(self, y):
+        """The way into Advanced: one row, saying what's been changed there, if anything."""
+        level = int(self.settings.get("strictness", posture.NORMAL))
+        items = [self.tile(M, y, W - 2 * M, 56, 22)]
+        items.append(self.text(M + 22, y + 9, "Advanced", 11, INK))
+        items.append(self.text(M + 22, y + 31, "For power users: how strict the posture check is.", 9, MUTED))
+        if level != posture.NORMAL:
+            items.append(self.text(W - M - 48, y + 18, f"Strictness: {posture.STRICTNESS[level][0]}", 10, YELLOW,
+                                   anchor="ne"))
+        items.append(self.text(W - M - 22, y + 16, "\u203a", 13, MUTED, anchor="ne"))
+        self.clickable(items, self.toggle_advanced)
+        return y + 56 + 28
+
+    def draw_advanced_page(self, y):
+        """Settings > Advanced: the posture strictness, with what each step catches."""
+        level = int(self.settings.get("strictness", posture.NORMAL))
+        name, drop_th, face_th, meaning = posture.STRICTNESS[level]
+        pw = W - 2 * M
+        self.button(M, y - 6, "\u2039  Back", self.toggle_advanced, h=32, size=10, pad=14, weight="")
+        y += 44
+        y = self.section(y, "Advanced")
+        ph = 236
+        self.tile(M, y, pw, ph, 22)
+        self.text(M + 22, y + 16, "Posture strictness", 11, INK)
+        self.text(W - M - 22, y + 16, name, 11, YELLOW, "Semibold", anchor="ne")
+        self.text(M + 22, y + 40, "Normal is the tested default. Change it only if alerts feel too frequent "
+                                  "or too rare.", 9, MUTED, width=pw - 44)
+        self.slider(M + 34, W - M - 34, y + 90, level)
+        self.text(M + 22, y + 110, "Relaxed", 9, MUTED)
+        self.text(W - M - 22, y + 110, "Strict", 9, MUTED, anchor="ne")
+        self.text(M + 22, y + 136, f"{meaning} Alerts when your eyes drop {round(100 * (1 - drop_th))}% below "
+                                   f"your calibration, or you lean in {round(100 * (face_th - 1))}%.",
+                  10, INK, width=pw - 44)
+        if level != posture.NORMAL:
+            self.button(M + 22, y + 186, "Reset to Normal", lambda: self.set("strictness", posture.NORMAL),
+                        h=32, size=10, weight="")
+        y += ph + 18
+        self.text(M, y, "Strictness only moves the line between good posture and a slouch. An alert still needs "
+                        "a slouch for most of 30 seconds.", 9, MUTED, width=pw)
+        return max(y + 50, self.main_h)
+
+    def toggle_advanced(self):
+        self.advanced = not self.advanced
+        self.draw()
 
     def slider(self, x1, x2, y, level):
         """Five stops on a glass track; click or drag. The lit part runs up to the knob."""

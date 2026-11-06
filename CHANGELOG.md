@@ -20,11 +20,12 @@ and versions follow [Semantic Versioning](https://semver.org).
   with x or Esc. "Break done. Nice!" now shows on the walk card, so a slouch alert at the same moment can't hide it.
   Stats has a **Refresh** button (it also refreshes itself every minute).
 - The camera turns off while the screen is locked, and back on when you unlock (the NPU stays ready).
-- **Settings** (a tab next to Stats, or tray -> Settings): a **strictness slider** with five steps from Relaxed to
-  Strict, each saying what it will and won't catch; the walk reminder (after 30 / 45 / 60 / 90 min, a walk of
-  30 s / 1 / 2 min); sound; start with Windows; recalibrate. Changes apply at once
-  ([#2](https://github.com/naraianlegrand/sloucher_ai/issues/2), [#13](https://github.com/naraianlegrand/sloucher_ai/issues/13)).
-  Normal is the setting tested on all the recorded desk clips.
+- **Settings** (a tab next to Stats, or tray -> Settings), in three groups: Posture (recalibrate, alert sound), Walk
+  reminder (after 30 / 45 / 60 / 90 min; a walk counts after 30 s / 1 / 2 min) and General (start with Windows, your
+  data). Changes apply at once ([#13](https://github.com/naraianlegrand/sloucher_ai/issues/13)).
+- **Settings > Advanced**, for power users: a **posture strictness** slider, Relaxed to Strict, each step saying what
+  it will and won't catch, with Reset to Normal. Normal is the default, and the only step that passes all the recorded
+  desk clips ([#2](https://github.com/naraianlegrand/sloucher_ai/issues/2)).
 
 ### Changed
 - Tray menu: Stats, Settings, Calibrate, Pause, Quit. Sound, start with Windows and the data folder are in Settings.
