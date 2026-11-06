@@ -5,6 +5,44 @@ and versions follow [Semantic Versioning](https://semver.org).
 
 ## [Unreleased]
 
+### Added
+- **Stats** (tray menu, or double-click the icon): today's upright %, time slouched, alerts, how fast you sat up,
+  slouches you fixed yourself, and walks; the last 7 days with the change against the 7 before; your best and hardest
+  hour of the day ([#4](https://github.com/naraianlegrand/sloucher_ai/issues/4)).
+- **Copy for my AI coach** and **Export** (CSV + JSON) from the stats window
+  ([#12](https://github.com/naraianlegrand/sloucher_ai/issues/12)). Stats are numbers only, kept on your laptop; see
+  docs/STATS.md.
+- **Walk card:** the hourly reminder flashes the screen blue twice, then a card stays until you walk, with
+  **"I walked"** (if the camera missed it) and **Snooze 10 min**
+  ([#10](https://github.com/naraianlegrand/sloucher_ai/issues/10)).
+- Smoked-glass look for Stats and the walk card: dark glass tiles, bars and capsule buttons with a bright rim and a
+  soft sheen, rounded corners, and no title bar (so no accent-coloured strip): drag Stats by any empty spot, close it
+  with x or Esc. "Break done. Nice!" now shows on the walk card, so a slouch alert at the same moment can't hide it.
+  Stats has a **Refresh** button (it also refreshes itself every minute). Every day's bar shows its upright %.
+- Headlines and numbers use the website's font, Big Shoulders Display (SIL Open Font License, bundled and loaded for
+  Sloucher only; nothing is installed). Text stays in Segoe UI, as on the website.
+- The camera turns off while the screen is locked, and back on when you unlock (the NPU stays ready).
+- **Settings** (a tab next to Stats, or tray -> Settings), in three groups: Posture (recalibrate, alert sound), Walk
+  reminder (after 30 / 45 / 60 / 90 min; a walk counts after 30 s / 1 / 2 min) and General (start with Windows, your
+  data). Changes apply at once ([#13](https://github.com/naraianlegrand/sloucher_ai/issues/13)).
+- **Settings > Advanced**, for power users: a **posture strictness** slider, Relaxed to Strict, each step saying what
+  it will and won't catch, with Reset to Normal. Normal is the default, and the only step that passes all the recorded
+  desk clips ([#2](https://github.com/naraianlegrand/sloucher_ai/issues/2)).
+
+### Changed
+- Tray menu: Stats, Settings, Calibrate, Pause, Quit. Sound, start with Windows and the data folder are in Settings.
+- The code is split into clear layers: the eyes (`vision.py`), the decisions (`app.py`), what's on screen
+  (`overlays.py`, `window.py`) and Windows plumbing (`winsys.py`); see docs/ARCHITECTURE.md.
+
+### Fixed
+- A walk taken with the screen locked (Win+L) wasn't seen. A locked screen now counts as away, and a lock of 30 s or
+  more counts as a walk, also after the display turns off
+  ([#11](https://github.com/naraianlegrand/sloucher_ai/issues/11)).
+- Turning Sound on or off while running with `--sit-minutes` saved those test timings for good; now only Sound is
+  saved.
+- Every glow now chimes, not just one a minute ([#1](https://github.com/naraianlegrand/sloucher_ai/issues/1)).
+- Pause -> Resume no longer restarts the sitting clock ([#3](https://github.com/naraianlegrand/sloucher_ai/issues/3)).
+
 ## [0.1.0] - 2026-10-29
 
 First public release, for Windows 11 laptops with an AMD Ryzen 7040 or 8040 (Phoenix, Hawk Point).

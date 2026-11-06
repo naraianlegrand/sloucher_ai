@@ -1,6 +1,6 @@
 """Where things live, for the installed app and for a source checkout alike.
 
-- Your data (settings, calibration, logs): %LOCALAPPDATA%\\Sloucher. SLOUCHER_HOME overrides it (tests).
+- Your data (settings, calibration, stats, logs): %LOCALAPPDATA%\\Sloucher. SLOUCHER_HOME overrides it (tests).
 - The app's own files (model, NPU host scripts, assets): next to the .exe when installed,
   or in the repo when running from source.
 """
@@ -48,6 +48,11 @@ def calibration_file():
     return os.path.join(data_dir(), "calibration.json")
 
 
+def stats_dir():
+    """Posture stats, one CSV per month (numbers only)."""
+    return os.path.join(data_dir(), "stats")
+
+
 def log_dir():
     path = os.path.join(data_dir(), "logs")
     os.makedirs(path, exist_ok=True)
@@ -76,6 +81,7 @@ def manifest():
 
 DEFAULTS = {
     "sound": True,
+    "strictness": 2,        # posture.STRICTNESS: 0 Relaxed .. 2 Normal .. 4 Strict
     "sit_minutes": 60,
     "break_seconds": 30,
     "xclbin": "auto",       # AMD: auto (4 NPU columns, else 1), 4x4 or 1x4
@@ -101,3 +107,11 @@ def load_settings():
 def save_settings(s):
     with open(settings_file(), "w", encoding="utf-8") as f:
         json.dump({k: s[k] for k in DEFAULTS if k in s}, f, indent=2)
+
+
+def save_setting(key, value):
+    """Change one saved setting. The rest of the file stays as it was, so a one-off
+    `--sit-minutes 2` from the command line never becomes permanent."""
+    s = load_settings()
+    s[key] = value
+    save_settings(s)

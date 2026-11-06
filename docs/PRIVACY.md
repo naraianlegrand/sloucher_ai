@@ -9,7 +9,12 @@ in mind: the most private settings by default, as little information as possible
   connections; the only socket it opens is between its own two processes on your laptop (127.0.0.1).
 - **Your calibration is three numbers**, saved in `%LOCALAPPDATA%\Sloucher\calibration.json`. Delete the file, or
   choose "remove my settings" when uninstalling, and they're gone.
-- **You're in control.** Pause turns the camera and the NPU off until you resume. Quit stops everything.
+- **Your posture stats are numbers**, one row per minute in the chair (seconds upright and slouched, alerts, walks),
+  saved in `%LOCALAPPDATA%\Sloucher\stats`. They never leave your laptop on their own: "Copy for my AI coach" and
+  "Export" only put them on your clipboard or in a folder you choose, and you decide whether to share them. Delete
+  the folder and they're gone. What each number means: [STATS.md](STATS.md).
+- **You're in control.** Pause turns the camera and the NPU off until you resume. Quit stops everything. While your
+  screen is locked, the camera is off.
 - **Logs** in `%LOCALAPPDATA%\Sloucher\logs` record what the app did (started, NPU ready, calibrated), never images
   or keypoints.
 

@@ -6,7 +6,7 @@ Sloucher.exe (our Python, frozen)                         NPU host (the NPU vend
 │ camera.py    webcam at 2 fps             │ ─────────► │ host.py       socket server        │
 │ posture.py   slouch / lean-in / alert    │            │ amd_vitisai   ONNX Runtime +       │
 │ breaks.py    hourly walk                 │ ◄───────── │               Vitis AI EP → NPU    │
-│ app.py       tray, glow, pill, chime     │ 17 points  │ yolo_pose     decode               │
+│ app.py       tray, alerts, walk, stats   │ 17 points  │ yolo_pose     decode               │
 │ engine.py    finds the runtime, starts   │            └────────────────────────────────────┘
 │              and checks the host         │ ◄── stdout: "Actually running on NPU", @@ready
 └──────────────────────────────────────────┘
@@ -26,20 +26,30 @@ second over localhost.
 **NPU-only.** The engine only accepts a host whose output shows the model actually running on the NPU. On AMD it tries
 4 NPU columns first and then 1 (room for Windows Studio Effects), never the CPU.
 
-**CPU budget.** Measured on a Ryzen 7 Phoenix laptop: the whole app uses 0.8% of 16 logical CPUs (~480 MB). The two
+**CPU budget.** Measured on a Ryzen 7 Phoenix laptop: the whole app uses about 1% of 16 logical CPUs (0.8-1.05% over
+several runs, ~490 MB). Just reading the webcam costs ~0.7% (the driver streams frames even at 2 a second); the NPU
+host ~0.2%; v0.2.0's stats, lock check and windows add under 0.1% (same-day comparison with v0.1.0). The two
 settings that matter: ONNX Runtime's thread spinning off with one thread (spinning burned ~7 cores), and 2 frames a
 second (posture doesn't change faster).
 
-**Where things live.** `paths.py`: your settings, calibration (three numbers) and logs are in `%LOCALAPPDATA%\Sloucher`.
+**Where things live.** `paths.py`: your settings, calibration (three numbers), posture stats (numbers per minute,
+[STATS.md](STATS.md)) and logs are in `%LOCALAPPDATA%\Sloucher`.
 No camera frames are ever written to disk.
 
 | File | Runs in | Job |
 |---|---|---|
 | `__main__.py` | app | `sloucher`, `sloucher doctor`, `sloucher --demo` |
-| `app.py` | app | tray, glow, pill, chime, first-run calibration, start with Windows |
+| `app.py` | app | the decisions: tray menu, events, when to alert, chime, remind, record; settings applied live |
+| `vision.py` | app | the eyes: camera to NPU to posture call, 2 fps, on its own thread; camera off while locked |
 | `camera.py` | app | webcam, black-frame check, resize for the model |
-| `posture.py` | app | metrics vs your baseline, 30 s alert rule, calibration |
-| `breaks.py` | app | hourly walk logic |
+| `posture.py` | app | metrics vs your baseline, the strictness presets, 30 s alert rule, calibration |
+| `breaks.py` | app | hourly walk logic, "I walked", snooze |
+| `stats.py` | app | per-minute posture stats, day / week report, coach summary, export |
+| `overlays.py` | app | on screen: edge glow, pill, walk flash and card, first-run welcome |
+| `window.py` | app | the one window: Stats and Settings tabs |
+| `glass.py` | app | window frame for the window and the walk card (dark, rounded, no title bar, drag to move); the headline font |
+| `liquid.py` | app | smoked-glass tiles, bars, capsule buttons, slider and switches (Pillow, drawn once and cached) |
+| `winsys.py` | app | Windows plumbing: screen locked?, start with Windows, one copy at a time |
 | `engine.py` | app | plans and starts the NPU host, checks the NPU report |
 | `hardware.py` | app | NPU from the registry (ComputeAccelerator class), Ryzen AI install and Python |
 | `doctor.py` | app | the checklist |

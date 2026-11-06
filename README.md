@@ -25,7 +25,19 @@ Recent laptops ship with an **NPU**, a chip built to run AI efficiently, and on 
 Sloucher puts it to work. It watches your face and shoulders through the webcam, all day, at **about 1% of the CPU**.
 When you've slouched, leaned in or stared down at your phone for most of 30 seconds, the edges of your screen glow and a
 small **"Sit up"** appears. Sit up, and it's gone. Once an hour, it gets you out of the chair, and it knows if you came
-back too early: *"Not done yet: 18 s left."*
+back too early: *"Not done yet: 18 s left."* If it missed your walk, tick **"I walked"**.
+
+**Stats** shows how much you slouched today, how fast you sat up again, and whether this week beats the last. One
+click copies a summary for your AI health coach.
+
+<p align="center">
+  <img src="docs/images/stats.png" alt="The Stats window: today's upright share, time slouched, alerts, time to sit up, slouches fixed, walks, and the last 7 days as bars" width="360">
+  <img src="docs/images/settings.png" alt="Settings: calibration, alert sound, walk reminder, start with Windows, your data, and Advanced" width="360">
+</p>
+<p align="center">
+  <img src="docs/images/walk-card.png" alt="The walk card: Time for a 30 s walk, with I walked and Snooze 10 min" width="340"><br>
+  <sub>Screenshots with a sample week of data.</sub>
+</p>
 
 Your video never leaves your laptop: each frame becomes 17 body points on the NPU and is then thrown away.
 
@@ -49,7 +61,7 @@ Measured on an AMD Ryzen 7040 laptop (Phoenix NPU, 16 logical CPUs):
 |---|---|
 | Model operators on the NPU | **96.5%** (1,042 of 1,080, INT8 YOLOv8n-pose) |
 | Time per frame on the NPU | **12-17 ms** |
-| Whole app, camera included | **0.8% CPU**, ~480 MB |
+| Whole app, camera included | **about 1% CPU** (0.8-1.05% measured, of which the webcam driver alone is ~0.7%), ~490 MB |
 | Shoulders found in the right place at a desk | **100%** of frames in every front-facing test clip (MoveNet: ~0%) |
 | Slouch, lean-in and head-down clips that alert | **3 of 3**, and no false alarm on the 6 good clips |
 | Installer | **39 MB**, no admin rights |
@@ -121,7 +133,8 @@ If Sloucher made you sit up, a ⭐ helps other people find it. Bugs and ideas go
 
 ## Licence
 
-[AGPL-3.0](LICENSE). The pose model is Ultralytics YOLOv8n-pose (AGPL-3.0), quantized to INT8 for the NPU. Privacy:
+[AGPL-3.0](LICENSE). The pose model is Ultralytics YOLOv8n-pose (AGPL-3.0), quantized to INT8 for the NPU. The headline
+font is Big Shoulders Display ([SIL Open Font License](src/sloucher/assets/BigShouldersDisplay-OFL.txt)). Privacy:
 [docs/PRIVACY.md](docs/PRIVACY.md).
 
 Made in Montréal, Canada, by [Karthikeyan Umesh](https://karthikeyanumesh.com).

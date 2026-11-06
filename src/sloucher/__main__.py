@@ -2,7 +2,7 @@
 
     sloucher                 run in the tray (the normal way)
     sloucher doctor          check the NPU, driver, runtime, model and camera
-    sloucher --demo          preview the alerts for 8 s, no camera or NPU
+    sloucher --demo          preview the alerts and the walk card for 10 s, no camera or NPU
     sloucher --sit-minutes 1 --break-seconds 10    try the walk reminder quickly
 """
 import argparse
@@ -28,7 +28,7 @@ def setup_logging(verbose=False):
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="sloucher", description="An always-on posture coach that runs on your NPU.")
     ap.add_argument("command", nargs="?", choices=["doctor"], help="doctor: check that Sloucher can run here")
-    ap.add_argument("--demo", action="store_true", help="preview the alerts for 8 s, no camera or NPU")
+    ap.add_argument("--demo", action="store_true", help="preview the alerts and the walk card for 10 s, no camera or NPU")
     ap.add_argument("--sit-minutes", type=float, help="sitting time before the walk reminder (default 60)")
     ap.add_argument("--break-seconds", type=float, help="time away that counts as a break (default 30)")
     ap.add_argument("--xclbin", choices=["auto", "4x4", "1x4"], help="AMD: NPU columns to use (default auto)")
