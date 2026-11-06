@@ -1,22 +1,27 @@
 """The Stats window: today, the last 7 days, the trend, and a summary for an AI coach.
 
+Smoked-glass look: a dark window with no title bar (glass.py), and every tile, bar and button
+drawn as a dark glass piece on one canvas (liquid.py).
+Drag it by any empty spot; the glass x or Esc closes it.
+
 Created when opened and destroyed when closed, so it costs nothing the rest of the time.
-Windows 11 Mica glass behind it (glass.py); it redraws every minute, or on Refresh.
+It redraws every minute, or on Refresh.
 """
 import datetime as dt
 import logging
-import time
 import os
 import subprocess
+import time
 import tkinter as tk
 from tkinter import filedialog
 
-from . import __version__, glass, paths, posture, stats
+from . import __version__, glass, liquid, paths, posture, stats
 
 log = logging.getLogger(__name__)
 
-BG, PANEL, INK, MUTED, FAINT = glass.GLASS, glass.TILE, "#F7F7F5", "#B4B4B0", "#4A4A48"
+INK, MUTED, FAINT = "#F7F7F5", "#B9B9B4", "#5A5A57"
 YELLOW = "#FFD60A"
+W = 600                     # layout width in 96-dpi pixels; scaled for the screen
 
 
 def _num(v, suffix=""):
@@ -28,23 +33,32 @@ class StatsWindow:
         self.root, self.recorder = root, recorder
         self.win = tk.Toplevel(root)
         self.win.title("Stats - Sloucher")
-        self.win.configure(bg=BG, padx=28, pady=24)
+        self.win.configure(bg=glass.BG)
         self.win.resizable(False, False)
         try:
             self.win.iconbitmap(paths.asset("icon.ico"))
         except tk.TclError:
             pass
         self.win.protocol("WM_DELETE_WINDOW", self.close)
-        self.body = None
-        self.updated = None
-        self.glassy = glass.apply(self.win, "mica")
-        self.accent = glass.tint(YELLOW) if self.glassy else YELLOW
+        self.win.bind("<Escape>", lambda e: self.close())
+        self.k = self.win.winfo_fpixels("1i") / 96          # screen scale (1.0 at 100%, 1.5 at 150%)
+        self.cv = tk.Canvas(self.win, bg=glass.BG, highlightthickness=0, width=self.px(W), height=10)
+        self.cv.pack()
+        self.cv.bind("<ButtonPress-1>", self.on_press)
+        glass.frame(self.win, titlebar=False)
+        self.note_text = None
         self.draw()
         self.win.update_idletasks()
         w, h = self.win.winfo_width(), self.win.winfo_height()
         self.win.geometry(f"+{(root.winfo_screenwidth() - w) // 2}+{max(0, (root.winfo_screenheight() - h) // 3)}")
         self.win.focus_force()
         self.refresh_job = self.win.after(60_000, self.refresh)
+
+    def px(self, v):
+        return int(round(v * self.k))
+
+    def font(self, size, weight=""):
+        return ("Segoe UI" + (f" {weight}" if weight else ""), size)
 
     @property
     def open(self):
@@ -62,7 +76,7 @@ class StatsWindow:
         self.refresh_job = self.win.after(60_000, self.refresh)
 
     def lift(self):
-        self.draw()
+        self.refresh()
         self.win.deiconify()
         self.win.lift()
         self.win.focus_force()
@@ -73,114 +87,128 @@ class StatsWindow:
             self.win.destroy()
             self.win = None
 
-    # -- layout
+    def on_press(self, e):
+        # Empty glass moves the window (there's no title bar); buttons handle their own clicks
+        if not self.cv.find_withtag("current"):
+            glass.drag(self.win)
 
-    def label(self, parent, text, size=11, colour=INK, weight="", **kw):
-        font = ("Segoe UI" + (f" {weight}" if weight else ""), size)
-        return tk.Label(parent, text=text, font=font, fg=colour, bg=parent["bg"], **kw)
+    # -- drawing
+
+    def text(self, x, y, s, size=11, colour=INK, weight="", anchor="nw"):
+        return self.cv.create_text(self.px(x), self.px(y), text=s, font=self.font(size, weight), fill=colour,
+                                   anchor=anchor)
+
+    def tile(self, x, y, w, h, r, tint=None):
+        img = liquid.piece(self.px(w), self.px(h), self.px(r), tint)
+        return self.cv.create_image(self.px(x), self.px(y), image=img, anchor="nw")
+
+    def button(self, x, y, label, command, tint=None, anchor="nw", h=40, size=11, pad=20):
+        return liquid.Button(self.cv, self.px(x), self.px(y), label, command, tint=tint,
+                             font=self.font(size, "Semibold"), pad=self.px(pad), h=self.px(h),
+                             anchor=anchor)
 
     def draw(self):
-        if self.body is not None:
-            self.body.destroy()
-        self.body = b = tk.Frame(self.win, bg=BG)
-        b.pack(fill="both")
+        cv = self.cv
+        cv.delete("all")
         rep = self.report = stats.report(self.rows())
         t = rep["today"]
+        yellow = liquid.rgb(YELLOW)
+        m = 28
 
-        head = tk.Frame(b, bg=BG)
-        head.pack(fill="x")
-        self.label(head, "Stats", 22, weight="Black").pack(side="left")
-        tk.Button(head, text="\u21bb  Refresh", font=("Segoe UI", 10), bg=PANEL, fg=INK, relief="flat",
-                  activebackground="#3A3A38", activeforeground=INK, padx=12, pady=3, cursor="hand2",
-                  command=self.refresh).pack(side="right", pady=(6, 0))
-        self.label(head, f"Updated {time.strftime('%H:%M')}", 9, MUTED).pack(side="right", padx=10, pady=(6, 0))
-        self.label(b, "Today", 10, MUTED, "Semibold").pack(anchor="w", pady=(14, 4))
+        # Header: title, last update, Refresh, close
+        self.text(m, 20, "Stats", 24, weight="Black")
+        close = self.button(W - m, 24, "✕", self.close, anchor="ne", h=36, size=10)
+        ref = self.button(W - m - close.w / self.k - 8, 24, "↻  Refresh", self.refresh, anchor="ne", h=36, size=10)
+        self.text(ref.x / self.k - 12, 34, f"Updated {time.strftime('%H:%M')}", 9, MUTED, anchor="ne")
 
-        tiles = tk.Frame(b, bg=BG)
-        tiles.pack(anchor="w", fill="x")
+        # Today: six glass tiles in two rows
+        y = 84
+        self.text(m, y, "Today", 10, MUTED, "Semibold")
+        y += 26
         walks = f"{t['walks_done']}/{int(t['walks_due'])}" if t["walks_due"] else str(t["walks_done"])
-        for i, (value, caption) in enumerate([
-            (_num(t["upright_pct"], "%"), "upright"),
-            (stats.hours_text(t["bad_min"]), "slouched"),
-            (str(int(t["alerts"])), "alerts"),
-            (_num(t["avg_correct_s"], " s"), "to sit up"),
-            (str(int(t["self_corrected"])), "fixed yourself"),
-            (walks, "walks"),
-        ]):
-            cell = tk.Frame(tiles, bg=PANEL, padx=12, pady=8)
-            cell.grid(row=0, column=i, padx=(0 if i == 0 else 6, 0), sticky="nsew")
-            self.label(cell, value, 16, self.accent if i == 0 else INK, "Semibold").pack(anchor="w")
-            self.label(cell, caption, 9, MUTED).pack(anchor="w")
+        cells = [(_num(t["upright_pct"], "%"), "upright"), (stats.hours_text(t["bad_min"]), "slouched"),
+                 (str(int(t["alerts"])), "alerts"), (_num(t["avg_correct_s"], " s"), "to sit up"),
+                 (str(int(t["self_corrected"])), "fixed yourself"), (walks, "walks")]
+        gap, tw, th = 10, (W - 2 * m - 20) / 3, 74
+        for i, (value, caption) in enumerate(cells):
+            x = m + (i % 3) * (tw + gap)
+            ty = y + (i // 3) * (th + gap)
+            self.tile(x, ty, tw, th, 18)
+            self.text(x + 16, ty + 12, value, 18, YELLOW if i == 0 else INK, "Semibold")
+            self.text(x + 16, ty + 46, caption, 9, MUTED)
+        y += 2 * th + gap + 14
 
         trend = []
         c = stats.change(t, rep["yesterday"])
         if c:
             trend.append(f"vs yesterday: {c}")
         trend.append(f"sitting {stats.hours_text(t['sitting_min'])}")
-        self.label(b, "  ·  ".join(trend), 10, MUTED).pack(anchor="w", pady=(8, 0))
+        self.text(m, y, "  ·  ".join(trend), 10, MUTED)
+        y += 34
 
-        w = rep["week"]
+        # Last 7 days: a glass panel with glass bars
+        w7 = rep["week"]
         head = "Last 7 days"
-        if w["upright_pct"] is not None:
-            head += f": {w['upright_pct']}% upright"
-            c = stats.change(w, rep["prev_week"])
+        if w7["upright_pct"] is not None:
+            head += f": {w7['upright_pct']}% upright"
+            c = stats.change(w7, rep["prev_week"])
             if c:
                 head += f" ({c} vs the 7 days before)"
-        self.label(b, head, 10, MUTED, "Semibold").pack(anchor="w", pady=(18, 4))
-        self.chart(b, rep["days"])
+        self.text(m, y, head, 10, MUTED, "Semibold")
+        y += 26
+        ph = 196
+        self.tile(m, y, W - 2 * m, ph, 24)
+        self.chart(m, y, W - 2 * m, ph, rep["days"], yellow)
+        y += ph + 14
 
         best, worst = rep["best_hour"], rep["worst_hour"]
         if best and worst:
-            self.label(b, f"Best time of day {stats.hour_range(best[0])} ({best[1]['upright_pct']}%)  ·  "
-                          f"hardest {stats.hour_range(worst[0])} ({worst[1]['upright_pct']}%)", 10, MUTED
-                       ).pack(anchor="w", pady=(6, 0))
+            self.text(m, y, f"Best time of day {stats.hour_range(best[0])} ({best[1]['upright_pct']}%)  ·  "
+                            f"hardest {stats.hour_range(worst[0])} ({worst[1]['upright_pct']}%)", 10, MUTED)
+            y += 30
 
-        row = tk.Frame(b, bg=BG)
-        row.pack(anchor="w", pady=(20, 0))
-        tk.Button(row, text="Copy for my AI coach", font=("Segoe UI Semibold", 11), bg=self.accent, fg="#000000",
-                  relief="flat", activebackground="#FFE45C", padx=16, pady=6, cursor="hand2",
-                  command=self.copy).pack(side="left")
-        for text, cmd in (("Export…", self.export), ("Open stats folder", self.folder)):
-            tk.Button(row, text=text, font=("Segoe UI", 11), bg=BG, fg=MUTED, relief="flat",
-                      activebackground=PANEL, activeforeground=INK, padx=12, pady=6, cursor="hand2",
-                      command=cmd).pack(side="left", padx=(8, 0))
-        self.note = self.label(b, "Numbers only, kept on this laptop. Nothing is sent anywhere unless you paste "
-                                  "or share it.", 9, MUTED, wraplength=520, justify="left")
-        self.note.pack(anchor="w", pady=(12, 0))
+        # Actions: the main one tinted, the others clear glass
+        b = self.button(m, y, "Copy for my AI coach", self.copy, tint=yellow, h=44)
+        e = self.button(m + b.w / self.k + 10, y, "Export…", self.export, h=44)
+        self.button(m + (b.w + e.w) / self.k + 20, y, "Open stats folder", self.folder, h=44)
+        y += 60
+        note = self.note_text or "Numbers only, kept on this laptop. Nothing is sent anywhere unless you paste or share it."
+        self.note = cv.create_text(self.px(m), self.px(y), text=note, font=self.font(9), fill=MUTED, anchor="nw",
+                                   width=self.px(W - 2 * m))
+        cv.configure(height=self.px(y + 44))
 
-    def chart(self, parent, days):
-        """Upright % per day: one bar each, today labelled, the rest on hover."""
-        W, H, top, bottom = 520, 150, 20, 26
-        cv = tk.Canvas(parent, width=W, height=H, bg=BG, highlightthickness=0)
-        cv.pack(anchor="w")
-        slot = W / len(days)
-        bw = min(36, slot * 0.5)
-        base = H - bottom
-        cv.create_line(0, base, W, base, fill=FAINT)
-        tip = cv.create_text(W, 0, text="", fill=MUTED, font=("Segoe UI", 9), anchor="ne")
+    def chart(self, x0, y0, w, h, days, tint):
+        """Upright % per day as glass bars; today labelled, the rest on hover."""
+        cv = self.cv
+        top, bottom = y0 + 34, y0 + h - 34
+        slot = (w - 24) / len(days)
+        bw = min(38, slot * 0.5)
+        tip = self.text(x0 + w - 18, y0 + 12, "", 9, MUTED, anchor="ne")
+        cv.create_line(self.px(x0 + 16), self.px(bottom), self.px(x0 + w - 16), self.px(bottom), fill=FAINT)
         today = dt.date.today()
         for i, (d, s) in enumerate(days):
-            cx = slot * i + slot / 2
-            cv.create_text(cx, base + 13, text="Today" if d == today else f"{d:%a}",
-                           fill=INK if d == today else MUTED, font=("Segoe UI", 9))
+            cx = x0 + 12 + slot * i + slot / 2
+            self.text(cx, bottom + 8, "Today" if d == today else f"{d:%a}", 9, INK if d == today else MUTED,
+                      "Semibold" if d == today else "", anchor="n")
             pct = s["upright_pct"] if s else None
             if pct is None:
-                cv.create_line(cx - bw / 4, base - 2, cx + bw / 4, base - 2, fill=FAINT, width=2)
+                cv.create_line(self.px(cx - bw / 4), self.px(bottom - 3), self.px(cx + bw / 4), self.px(bottom - 3),
+                               fill=FAINT, width=self.px(2))
                 continue
-            y = base - (base - top) * pct / 100
-            bar = cv.create_rectangle(cx - bw / 2, y, cx + bw / 2, base, fill=self.accent, outline="")
-            info = f"{d:%a %b %d}: {pct}% upright, {stats.hours_text(s['sitting_min'])} sitting, " \
-                   f"{int(s['alerts'])} alerts, {s['walks_done']} walks"
+            bh = max(10, (bottom - top) * pct / 100)
+            bar = self.tile(cx - bw / 2, bottom - bh, bw, bh, 12, tint)
             if d == today:
-                cv.create_text(cx, y - 9, text=f"{pct}%", fill=INK, font=("Segoe UI Semibold", 9))
-            for item in (bar,):
-                cv.tag_bind(item, "<Enter>", lambda e, t=info: cv.itemconfigure(tip, text=t))
-                cv.tag_bind(item, "<Leave>", lambda e: cv.itemconfigure(tip, text=""))
+                self.text(cx, bottom - bh - 18, f"{pct}%", 9, INK, "Semibold", anchor="n")
+            info = (f"{d:%a %b %d}: {pct}% upright, {stats.hours_text(s['sitting_min'])} sitting, "
+                    f"{int(s['alerts'])} alerts, {s['walks_done']} walks")
+            cv.tag_bind(bar, "<Enter>", lambda e, t=info: cv.itemconfigure(tip, text=t))
+            cv.tag_bind(bar, "<Leave>", lambda e: cv.itemconfigure(tip, text=""))
 
     # -- actions
 
     def say(self, text):
-        self.note.configure(text=text, fg=INK)
+        self.note_text = text
+        self.cv.itemconfigure(self.note, text=text, fill=INK)
 
     def copy(self):
         text = stats.coach_summary(self.report, drop_pct=round(100 * (1 - posture.DROP_TH)), alert_s=posture.ALERT_S)

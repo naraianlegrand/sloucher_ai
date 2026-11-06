@@ -15,7 +15,9 @@ and versions follow [Semantic Versioning](https://semver.org).
 - **Walk card:** the hourly reminder flashes the screen blue twice, then a card stays until you walk, with
   **"I walked"** (if the camera missed it) and **Snooze 10 min**
   ([#10](https://github.com/naraianlegrand/sloucher_ai/issues/10)).
-- Windows 11 look: Mica glass behind Stats, frosted Acrylic behind the walk card, dark title bar, rounded corners.
+- Smoked-glass look for Stats and the walk card: dark glass tiles, bars and capsule buttons with a bright rim and a
+  soft sheen, rounded corners, and no title bar (so no accent-coloured strip): drag Stats by any empty spot, close it
+  with x or Esc. "Break done. Nice!" now shows on the walk card, so a slouch alert at the same moment can't hide it.
   Stats has a **Refresh** button (it also refreshes itself every minute).
 - The camera turns off while the screen is locked, and back on when you unlock (the NPU stays ready).
 

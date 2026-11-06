@@ -23,7 +23,7 @@ import winsound
 
 import pystray
 
-from . import APP_NAME, breaks, camera, engine, glass, icon, paths, posture, stats, statswindow
+from . import APP_NAME, breaks, camera, engine, glass, icon, liquid, paths, posture, stats, statswindow
 
 log = logging.getLogger(__name__)
 
@@ -324,58 +324,77 @@ class Flash:
 
 
 class WalkCard:
-    """The walk reminder: bottom right, stays until you walk, tick "I walked" or snooze.
+    """The walk reminder: a smoked-glass card, bottom right, that stays until you walk, tick
+    "I walked" or snooze. When the walk counts it turns green ("Break done. Nice!") and fades.
 
     Clickable, but it never takes the keyboard from the window you're typing in.
     """
+    W, H = 372, 152            # 96-dpi pixels; scaled for the screen
 
     def __init__(self, root, on_walked, on_snooze):
         self.root, self.on_walked, self.on_snooze = root, on_walked, on_snooze
         self.win = None
+        self.close_job = None
 
     @property
     def showing(self):
         return self.win is not None
 
-    def show(self, title, detail):
-        if self.win is None:
-            self._build()
-        self.title.configure(text=title)
-        self.detail.configure(text=detail)
-        self._place()
-
     def _build(self):
         self.win = win = tk.Toplevel(self.root)
         win.overrideredirect(True)
         win.attributes("-topmost", True)
-        win.configure(bg=glass.GLASS, padx=22, pady=18)
-        head = tk.Frame(win, bg=glass.GLASS)
-        head.pack(anchor="w")
-        dot = tk.Canvas(head, width=12, height=12, bg=glass.GLASS, highlightthickness=0)
-        dot.create_oval(1, 1, 11, 11, fill=BLUE, outline="")
-        dot.pack(side="left", padx=(0, 10))
-        self.title = tk.Label(head, font=("Segoe UI Semibold", 13), fg="#F7F7F5", bg=glass.GLASS)
-        self.title.pack(side="left")
-        self.detail = tk.Label(win, font=("Segoe UI", 10), fg="#C8C8C4", bg=glass.GLASS, justify="left")
-        self.detail.pack(anchor="w", pady=(4, 12))
-        row = tk.Frame(win, bg=glass.GLASS)
-        row.pack(anchor="w")
-        self.walked_btn = tk.Button(row, text="\u2713  I walked", font=("Segoe UI Semibold", 11), bg=BLUE,
-                                    fg="#000000", relief="flat", activebackground="#9BE3FF", padx=14, pady=5,
-                                    cursor="hand2", command=self.on_walked)
-        self.walked_btn.pack(side="left")
-        self.snooze_btn = tk.Button(row, text="Snooze 10 min", font=("Segoe UI", 11), bg=glass.TILE, fg="#F7F7F5",
-                                    relief="flat", activebackground="#3A3A38", activeforeground="#F7F7F5",
-                                    padx=12, pady=5, cursor="hand2", command=self.on_snooze)
-        self.snooze_btn.pack(side="left", padx=(8, 0))
+        win.configure(bg=glass.BG)
+        self.k = win.winfo_fpixels("1i") / 96
+        self.cv = tk.Canvas(win, bg=glass.BG, highlightthickness=0,
+                            width=self.px(self.W), height=self.px(self.H))
+        self.cv.pack()
         # No focus and no taskbar button, but (unlike the glow) clicks land on it
         win.update_idletasks()
         hwnd = ctypes.windll.user32.GetParent(win.winfo_id())
         style = ctypes.windll.user32.GetWindowLongW(hwnd, -20)
         ctypes.windll.user32.SetWindowLongW(hwnd, -20, style | 0x80 | 0x08000000)    # TOOLWINDOW | NOACTIVATE
-        if glass.apply(win, "acrylic"):           # frosted glass and rounded corners (Windows 11)
-            self.walked_btn.configure(bg=glass.tint(BLUE, 0x50))      # Acrylic is lighter than Mica
-            dot.itemconfigure(1, fill=glass.tint(BLUE, 0x50))
+        glass.frame(win)
+        self._place()
+
+    def px(self, v):
+        return int(round(v * self.k))
+
+    def _draw(self, title, detail, colour, buttons):
+        cv, px = self.cv, self.px
+        cv.delete("all")
+        h = self.H if buttons else 84          # no buttons: a shorter card
+        cv.configure(height=px(h))
+        cv.create_image(0, 0, image=liquid.piece(px(self.W), px(h), px(14)), anchor="nw")
+        cv.create_oval(px(22), px(25), px(33), px(36), fill=colour, outline="")
+        cv.create_text(px(42), px(30), text=title, font=("Segoe UI Semibold", 13), fill="#F7F7F5", anchor="w")
+        cv.create_text(px(22), px(48), text=detail, font=("Segoe UI", 10), fill="#B9B9B4", anchor="nw",
+                       width=px(self.W - 44))
+        if buttons:
+            b = liquid.Button(cv, px(22), px(self.H - 56), "\u2713  I walked", self.on_walked,
+                              tint=liquid.rgb(BLUE), pad=px(18), h=px(38))
+            liquid.Button(cv, b.x + b.w + px(10), px(self.H - 56), "Snooze 10 min", self.on_snooze,
+                          font=("Segoe UI", 11), pad=px(18), h=px(38))
+
+    def show(self, title, detail):
+        if self.close_job:
+            self.root.after_cancel(self.close_job)
+            self.close_job = None
+        if self.win is None:
+            self._build()
+        self._draw(title, detail, BLUE, buttons=True)
+        self._place()
+
+    def done(self, text="Break done. Nice!"):
+        """The walk counted: the card says so for a moment, then closes. Its own place, so a
+        slouch alert at the same moment can't hide it."""
+        if self.win is None:
+            self._build()
+        self._draw(text, "Your sitting clock starts again.", GREEN, buttons=False)
+        self._place()
+        if self.close_job:
+            self.root.after_cancel(self.close_job)
+        self.close_job = self.root.after(3500, self.hide)
 
     def _place(self):
         self.win.update_idletasks()
@@ -384,6 +403,7 @@ class WalkCard:
         self.win.geometry(f"+{area[2] - w - 24}+{area[3] - h - 24}")
 
     def hide(self):
+        self.close_job = None
         if self.win is not None:
             self.win.destroy()
             self.win = None
@@ -655,10 +675,11 @@ class App:
         """A break, however it was noticed. Only a reminder that was due gets the "Nice!"."""
         self.stats.walk_done(how, sat_s)
         self.last_lock_s = 0.0
-        self.card.hide()
         if self.walk_due:
             self.walk_due = False
-            self.pill.show("Break done. Nice!", GREEN, 4)
+            self.card.done()
+        else:
+            self.card.hide()
 
     def on_menu(self, item):
         if item == "calibrate":
@@ -745,7 +766,7 @@ def demo():
                              card.show("Time for a 30 s walk", "Sitting 60 min. I'll see you leave the chair,\n"
                                                                "or tick it if you walked and I missed it."))),
              (7000, lambda: card.show("Not done yet: 18 s left", "Get up again and walk a little longer.")),
-             (9000, lambda: (card.hide(), pill.show("Break done. Nice!", GREEN))),
+             (9000, lambda: card.done()),
              (10500, root.destroy)]
     for ms, fn in steps:
         root.after(ms, fn)
