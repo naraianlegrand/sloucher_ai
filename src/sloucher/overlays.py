@@ -125,7 +125,7 @@ class CalibrateWindow:
             self.win.iconbitmap(paths.asset("icon.ico"))
         except tk.TclError:
             pass
-        tk.Label(self.win, text="Sit up tall.", font=("Segoe UI Black", 22), fg="#F7F7F5", bg="#000000").pack(anchor="w")
+        tk.Label(self.win, text="Sit up tall.", font=glass.display(30), fg="#F7F7F5", bg="#000000").pack(anchor="w")
         tk.Label(self.win, text="Look at your screen as you normally would, then click Calibrate.\n"
                                 "It takes 3 seconds, and it's how Sloucher learns your good posture.",
                  font=("Segoe UI", 11), fg="#A3A3A0", bg="#000000", justify="left").pack(anchor="w", pady=(8, 22))
@@ -221,7 +221,8 @@ class WalkCard:
         cv.configure(height=px(h))
         cv.create_image(0, 0, image=liquid.piece(px(self.W), px(h), px(14)), anchor="nw")
         cv.create_oval(px(22), px(25), px(33), px(36), fill=colour, outline="")
-        cv.create_text(px(42), px(30), text=title, font=("Segoe UI Semibold", 13), fill="#F7F7F5", anchor="w")
+        font = glass.display(19)
+        cv.create_text(px(42), glass.baseline_y(font, px(38)), text=title, font=font, fill="#F7F7F5", anchor="sw")
         cv.create_text(px(22), px(48), text=detail, font=("Segoe UI", 10), fill="#B9B9B4", anchor="nw",
                        width=px(self.W - 44))
         if buttons:

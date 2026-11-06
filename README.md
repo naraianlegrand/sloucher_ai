@@ -30,6 +30,15 @@ back too early: *"Not done yet: 18 s left."* If it missed your walk, tick **"I w
 **Stats** shows how much you slouched today, how fast you sat up again, and whether this week beats the last. One
 click copies a summary for your AI health coach.
 
+<p align="center">
+  <img src="docs/images/stats.png" alt="The Stats window: today's upright share, time slouched, alerts, time to sit up, slouches fixed, walks, and the last 7 days as bars" width="360">
+  <img src="docs/images/settings.png" alt="Settings: calibration, alert sound, walk reminder, start with Windows, your data, and Advanced" width="360">
+</p>
+<p align="center">
+  <img src="docs/images/walk-card.png" alt="The walk card: Time for a 30 s walk, with I walked and Snooze 10 min" width="340"><br>
+  <sub>Screenshots with a sample week of data.</sub>
+</p>
+
 Your video never leaves your laptop: each frame becomes 17 body points on the NPU and is then thrown away.
 
 ## Why the NPU
@@ -124,7 +133,8 @@ If Sloucher made you sit up, a ⭐ helps other people find it. Bugs and ideas go
 
 ## Licence
 
-[AGPL-3.0](LICENSE). The pose model is Ultralytics YOLOv8n-pose (AGPL-3.0), quantized to INT8 for the NPU. Privacy:
+[AGPL-3.0](LICENSE). The pose model is Ultralytics YOLOv8n-pose (AGPL-3.0), quantized to INT8 for the NPU. The headline
+font is Big Shoulders Display ([SIL Open Font License](src/sloucher/assets/BigShouldersDisplay-OFL.txt)). Privacy:
 [docs/PRIVACY.md](docs/PRIVACY.md).
 
 Made in Montréal, Canada, by [Karthikeyan Umesh](https://karthikeyanumesh.com).

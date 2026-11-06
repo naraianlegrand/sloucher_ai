@@ -17,7 +17,7 @@ import winsound
 
 import pystray
 
-from . import APP_NAME, breaks, icon, paths, stats, window
+from . import APP_NAME, breaks, glass, icon, paths, stats, window
 from .overlays import BLUE, GREEN, RED, YELLOW, CalibrateWindow, Flash, Glow, Pill, WalkCard
 from .vision import Vision
 from .winsys import already_running, screen_locked, set_autostart
@@ -34,6 +34,7 @@ class App:
     def __init__(self, settings):
         self.settings = settings
         self.events = queue.Queue()        # from the vision thread and the tray thread
+        glass.load_fonts()
         self.root = tk.Tk()
         self.root.withdraw()
         self.glow = Glow(self.root)
@@ -340,6 +341,7 @@ def run(settings):
 
 def demo():
     """Preview the alerts without the camera or the NPU, then exit."""
+    glass.load_fonts()
     root = tk.Tk()
     root.withdraw()
     glow, pill, flash = Glow(root), Pill(root), Flash(root)

@@ -18,7 +18,9 @@ and versions follow [Semantic Versioning](https://semver.org).
 - Smoked-glass look for Stats and the walk card: dark glass tiles, bars and capsule buttons with a bright rim and a
   soft sheen, rounded corners, and no title bar (so no accent-coloured strip): drag Stats by any empty spot, close it
   with x or Esc. "Break done. Nice!" now shows on the walk card, so a slouch alert at the same moment can't hide it.
-  Stats has a **Refresh** button (it also refreshes itself every minute).
+  Stats has a **Refresh** button (it also refreshes itself every minute). Every day's bar shows its upright %.
+- Headlines and numbers use the website's font, Big Shoulders Display (SIL Open Font License, bundled and loaded for
+  Sloucher only; nothing is installed). Text stays in Segoe UI, as on the website.
 - The camera turns off while the screen is locked, and back on when you unlock (the NPU stays ready).
 - **Settings** (a tab next to Stats, or tray -> Settings), in three groups: Posture (recalibrate, alert sound), Walk
   reminder (after 30 / 45 / 60 / 90 min; a walk counts after 30 s / 1 / 2 min) and General (start with Windows, your

@@ -71,6 +71,7 @@ class Window:
         return int(round(v * self.k))
 
     def font(self, size, weight=""):
+        """Segoe UI for text, as on the website (headlines: see headline())."""
         return ("Segoe UI" + (f" {weight}" if weight else ""), size)
 
     @property
@@ -109,6 +110,12 @@ class Window:
         return self.cv.create_text(self.px(x), self.px(y), text=s, font=self.font(size, weight), fill=colour,
                                    anchor=anchor, width=self.px(width) if width else 0)
 
+    def headline(self, x, base, s, size, colour=INK, anchor="sw"):
+        """Text in the headline font, placed by its baseline (`base`); anchor sw, s or se."""
+        font = glass.display(size)
+        return self.cv.create_text(self.px(x), glass.baseline_y(font, self.px(base)), text=s, font=font,
+                                   fill=colour, anchor=anchor)
+
     def tile(self, x, y, w, h, r, tint=None, level=1.0):
         img = liquid.piece(self.px(w), self.px(h), self.px(r), tint, level)
         return self.cv.create_image(self.px(x), self.px(y), image=img, anchor="nw")
@@ -128,7 +135,7 @@ class Window:
         if self.refresh_job:
             self.win.after_cancel(self.refresh_job)
             self.refresh_job = None
-        self.text(M, 20, self.tab, 24, weight="Black")
+        self.headline(M, 58, self.tab, 34)
         close = self.button(W - M, 24, "✕", self.close, anchor="ne", h=36, size=10, pad=13)
         right = W - M - close.w / self.k - 8
         if self.tab == "Stats":
@@ -178,7 +185,7 @@ class Window:
             x = M + (i % 3) * (tw + gap)
             ty = y + (i // 3) * (th + gap)
             self.tile(x, ty, tw, th, 18)
-            self.text(x + 16, ty + 12, value, 18, YELLOW if i == 0 else INK, "Semibold")
+            self.headline(x + 16, ty + 40, value, 25, YELLOW if i == 0 else INK)
             self.text(x + 16, ty + 46, caption, 9, MUTED)
         y += 2 * th + gap + 14
 
@@ -218,7 +225,7 @@ class Window:
         return y + 44
 
     def chart(self, x0, y0, w, h, days, tint):
-        """Upright % per day as glass bars; today labelled, the rest on hover."""
+        """Upright % per day as glass bars, each labelled; hover for the day's details."""
         cv = self.cv
         top, bottom = y0 + 34, y0 + h - 34
         slot = (w - 24) / len(days)
@@ -237,8 +244,7 @@ class Window:
                 continue
             bh = max(10, (bottom - top) * pct / 100)
             bar = self.tile(cx - bw / 2, bottom - bh, bw, bh, 12, tint)
-            if d == today:
-                self.text(cx, bottom - bh - 18, f"{pct}%", 9, INK, "Semibold", anchor="n")
+            self.headline(cx, bottom - bh - 7, f"{pct}%", 13, INK if d == today else MUTED, anchor="s")
             info = (f"{d:%a %b %d}: {pct}% upright, {stats.hours_text(s['sitting_min'])} sitting, "
                     f"{int(s['alerts'])} alerts, {s['walks_done']} walks")
             cv.tag_bind(bar, "<Enter>", lambda e, t=info: cv.itemconfigure(tip, text=t))

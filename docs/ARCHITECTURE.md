@@ -47,7 +47,7 @@ No camera frames are ever written to disk.
 | `stats.py` | app | per-minute posture stats, day / week report, coach summary, export |
 | `overlays.py` | app | on screen: edge glow, pill, walk flash and card, first-run welcome |
 | `window.py` | app | the one window: Stats and Settings tabs |
-| `glass.py` | app | window frame for the window and the walk card: dark, rounded, no title bar, drag to move |
+| `glass.py` | app | window frame for the window and the walk card (dark, rounded, no title bar, drag to move); the headline font |
 | `liquid.py` | app | smoked-glass tiles, bars, capsule buttons, slider and switches (Pillow, drawn once and cached) |
 | `winsys.py` | app | Windows plumbing: screen locked?, start with Windows, one copy at a time |
 | `engine.py` | app | plans and starts the NPU host, checks the NPU report |

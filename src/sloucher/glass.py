@@ -49,3 +49,35 @@ def drag(win):
     hwnd = hwnd_of(win)
     ctypes.windll.user32.ReleaseCapture()
     ctypes.windll.user32.SendMessageW(hwnd, 0x00A1, 2, 0)          # WM_NCLBUTTONDOWN, HTCAPTION
+
+
+# ---------------------------------------------------------------- the website's headline font
+
+DISPLAY = "Big Shoulders Display ExtraBold"     # weight 800, as on sloucher.karthikeyanumesh.com
+_display_ok = None
+
+
+def load_fonts():
+    """Big Shoulders Display (SIL Open Font License, assets/BigShouldersDisplay-OFL.txt), for this
+    app only: loaded privately, so nothing is installed on the laptop. Call before the first window."""
+    from . import paths
+    try:
+        ctypes.windll.gdi32.AddFontResourceExW(paths.asset("BigShouldersDisplay.ttf"), 0x10, 0)   # FR_PRIVATE
+    except (AttributeError, OSError):
+        log.debug("headline font not loaded", exc_info=True)
+
+
+def display(size):
+    """The headline font at `size` points, or Segoe UI Black (a bit smaller) if it didn't load."""
+    global _display_ok
+    if _display_ok is None:
+        import tkinter.font
+        _display_ok = DISPLAY in tkinter.font.families()
+    return (DISPLAY, size) if _display_ok else ("Segoe UI Black", round(size * 0.78))
+
+
+def baseline_y(font, y_px):
+    """Canvas y (pixels) for a south-anchored text so its baseline lands on y_px: the headline font
+    has a lot of room above its capitals, so it's placed by its baseline rather than its box."""
+    import tkinter.font
+    return y_px + tkinter.font.Font(font=font).metrics("descent")

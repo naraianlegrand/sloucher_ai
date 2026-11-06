@@ -31,7 +31,9 @@ runs a test on the NPU, and says what to fix.
 |---|---|
 | "Stopped: couldn't run on the NPU" | Usually a video call or the Camera app is using Windows Studio Effects, which share the NPU. Close it, then choose **Resume** in the tray menu. |
 | "The camera picture is black" | Another app is using the camera, or the privacy shutter is closed. |
-| "Needs calibration" | Sit up tall, tray menu → **Calibrate**. |
+| "Needs calibration" | Sit up tall, tray menu → **Calibrate** (or Settings → Recalibrate). |
+| Alerts come too often, or not often enough | First recalibrate, looking at your screen the way you normally do. Still off? Settings → Advanced → **Posture strictness**. Normal is the tested default. |
+| The walk reminder missed my walk | Tick **I walked** on the card. Locking the screen (Win+L) for 30 s or more also counts as a walk. |
 
 Sloucher never falls back to the CPU: if the NPU isn't available, it stops and tells you.
 
