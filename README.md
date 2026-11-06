@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="https://github.com/naraianlegrand/sloucher_ai/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/naraianlegrand/sloucher_ai?style=flat-square&color=FFD60A&labelColor=000000"></a>
-  <a href="LICENSE"><img alt="Licence: AGPL-3.0" src="https://img.shields.io/badge/licence-AGPL--3.0-black?style=flat-square"></a>
+  <a href="LICENSE"><img alt="Free and open source: AGPL-3.0" src="https://img.shields.io/badge/free%20%26%20open%20source-AGPL--3.0-black?style=flat-square"></a>
   <a href="https://github.com/naraianlegrand/sloucher_ai/actions/workflows/tests.yml"><img alt="Tests" src="https://github.com/naraianlegrand/sloucher_ai/actions/workflows/tests.yml/badge.svg"></a>
   <img alt="Windows 11" src="https://img.shields.io/badge/Windows-11-black?style=flat-square">
   <img alt="Runs on the AMD Ryzen AI NPU" src="https://img.shields.io/badge/runs%20on-AMD%20Ryzen%20AI%20NPU-FFD60A?style=flat-square&labelColor=000000">
@@ -125,11 +125,21 @@ Build the installer: `packaging\build.ps1 -Python <python.exe>` (PyInstaller + I
   your own app on the NPU.
 - [Privacy](https://sloucher.karthikeyanumesh.com/privacy/)
 
-## Help it grow
+## Free and open source
 
-If Sloucher made you sit up, a ⭐ helps other people find it. Bugs and ideas go in
-[issues](https://github.com/naraianlegrand/sloucher_ai/issues); what's planned is in the
-[milestones](https://github.com/naraianlegrand/sloucher_ai/milestones). To contribute: [CONTRIBUTING.md](CONTRIBUTING.md).
+Sloucher is free, and its code is all here: the app, the NPU host, the tests and the build. Read exactly what it does
+with your camera; build it yourself; change it. The INT8 pose model (YOLOv8n-pose, AGPL-3.0) ships in the installer,
+with its checksum in [models/manifest.json](models/manifest.json); it's coming to Hugging Face with a model card. It's licensed under the [AGPL-3.0](LICENSE), so it stays
+open: anyone who shares a changed version shares its source too.
+
+**Help it grow**
+- ⭐ **Star it.** It's how other people find it.
+- 🧪 **Test on another NPU.** Intel Core Ultra, Snapdragon X, Ryzen AI 300 or Apple Silicon:
+  [tell us](https://github.com/naraianlegrand/sloucher_ai/issues/new/choose); [how a port fits together](docs/PORTING.md).
+- 🐛 **Bugs and ideas** go in [issues](https://github.com/naraianlegrand/sloucher_ai/issues); what's planned is in the
+  [milestones](https://github.com/naraianlegrand/sloucher_ai/milestones).
+- 🛠️ **Code:** [CONTRIBUTING.md](CONTRIBUTING.md). Be kind: [code of conduct](CODE_OF_CONDUCT.md). Security issues:
+  [SECURITY.md](SECURITY.md), privately.
 
 ## Licence
 
