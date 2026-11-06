@@ -1,6 +1,8 @@
 # Contributing
 
-Thanks for helping. Sloucher is small on purpose: a calm app, about 1% CPU, the model on the NPU only.
+Thanks for helping. Sloucher is free and open source (AGPL-3.0), and small on purpose: a calm app, about 1% CPU, the
+model on the NPU only. Everyone taking part follows the [code of conduct](CODE_OF_CONDUCT.md); security problems go
+through [SECURITY.md](SECURITY.md), not public issues.
 
 ## The most useful help right now
 
