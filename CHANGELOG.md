@@ -5,6 +5,8 @@ and versions follow [Semantic Versioning](https://semver.org).
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-06
+
 ### Added
 - **Stats** (tray menu, or double-click the icon): today's upright %, time slouched, alerts, how fast you sat up,
   slouches you fixed yourself, and walks; the last 7 days with the change against the 7 before; your best and hardest
@@ -66,5 +68,6 @@ First public release, for Windows 11 laptops with an AMD Ryzen 7040 or 8040 (Pho
 - Tip: calibrate while looking at your screen as you normally do, not at the camera; otherwise reading the lower part
   of the screen can count as slouching ([#2](https://github.com/naraianlegrand/sloucher_ai/issues/2)).
 
-[Unreleased]: https://github.com/naraianlegrand/sloucher_ai/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/naraianlegrand/sloucher_ai/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/naraianlegrand/sloucher_ai/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/naraianlegrand/sloucher_ai/releases/tag/v0.1.0
