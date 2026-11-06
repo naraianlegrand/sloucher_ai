@@ -81,6 +81,7 @@ def manifest():
 
 DEFAULTS = {
     "sound": True,
+    "strictness": 2,        # posture.STRICTNESS: 0 Relaxed .. 2 Normal .. 4 Strict
     "sit_minutes": 60,
     "break_seconds": 30,
     "xclbin": "auto",       # AMD: auto (4 NPU columns, else 1), 4x4 or 1x4

@@ -21,6 +21,20 @@ NOSE, L_EYE, R_EYE, L_EAR, R_EAR, L_SH, R_SH = range(7)
 
 DROP_TH = 0.96        # slouch when eye drop < 96% of upright
 FACE_TH = 1.15        # lean-in when face ratio > 115% of upright
+
+# The strictness slider (Settings): (name, eye-drop threshold, face-ratio threshold, what it means).
+# Checked on the nine recorded desk clips: only Normal catches every slouch clip and passes every
+# upright one. The recorded slouch drops the eyes about 6%, so Easy and Relaxed miss slouches that
+# mild; head-down and leaning-in clips alert at every setting. Firm and Strict also catch small
+# slouches but call an upright clip bad more often.
+STRICTNESS = [
+    ("Relaxed", 0.92, 1.25, "Only big slouches: head down, or leaning right in to the screen."),
+    ("Easy", 0.94, 1.20, "Reading low on the screen is fine. A mild slouch can go unnoticed."),
+    ("Normal", DROP_TH, FACE_TH, "Catches a mild slouch. Tested on all the recorded desk clips."),
+    ("Firm", 0.97, 1.12, "Catches small slouches too. Looking down a little may count."),
+    ("Strict", 0.98, 1.10, "Keeps you very upright. Expect more alerts."),
+]
+NORMAL = 2
 SMOOTH_S = 0.5        # rolling median over about half a second
 ALERT_S = 30          # alert after a sustained bad posture ...
 ALERT_FRAC = 0.8      # ... bad for 80% of the last 30 s, so a brief sit-up doesn't reset the clock
@@ -104,13 +118,20 @@ class Posture:
     or ("calibrated" | "calibration_failed") on the frame a calibration finishes.
     """
 
-    def __init__(self, path, fps):
+    def __init__(self, path, fps, strictness=NORMAL):
         self.path = path
         self.fps = fps
         self.base = self._load()
         self.det = None
         self.timer = AlertTimer(fps)
         self.collecting = None
+        self.strictness = strictness
+
+    def set_strictness(self, level):
+        """Move the slider: new thresholds from the next frame; the 30 s alert window carries on."""
+        level = max(0, min(len(STRICTNESS) - 1, int(level)))
+        if level != self.strictness:
+            self.strictness, self.det = level, None
 
     def _load(self):
         try:
@@ -146,6 +167,8 @@ class Posture:
         if self.base is None:
             return "uncalibrated", False
         if self.det is None:
-            self.det = SlouchDetector(self.base, frame_wh, window=max(3, round(SMOOTH_S * self.fps)))
+            _, drop_th, face_th, _ = STRICTNESS[self.strictness]
+            self.det = SlouchDetector(self.base, frame_wh, window=max(3, round(SMOOTH_S * self.fps)),
+                                      drop_th=drop_th, face_th=face_th)
         state, _, _ = self.det.update(kps)
         return state, self.timer.update(state)

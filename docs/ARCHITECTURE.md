@@ -6,7 +6,7 @@ Sloucher.exe (our Python, frozen)                         NPU host (the NPU vend
 │ camera.py    webcam at 2 fps             │ ─────────► │ host.py       socket server        │
 │ posture.py   slouch / lean-in / alert    │            │ amd_vitisai   ONNX Runtime +       │
 │ breaks.py    hourly walk                 │ ◄───────── │               Vitis AI EP → NPU    │
-│ app.py       tray, glow, pill, chime     │ 17 points  │ yolo_pose     decode               │
+│ app.py       tray, alerts, walk, stats   │ 17 points  │ yolo_pose     decode               │
 │ engine.py    finds the runtime, starts   │            └────────────────────────────────────┘
 │              and checks the host         │ ◄── stdout: "Actually running on NPU", @@ready
 └──────────────────────────────────────────┘
@@ -37,14 +37,17 @@ No camera frames are ever written to disk.
 | File | Runs in | Job |
 |---|---|---|
 | `__main__.py` | app | `sloucher`, `sloucher doctor`, `sloucher --demo` |
-| `app.py` | app | tray, glow, pill, chime, walk flash and card, lock check, first-run calibration, start with Windows |
+| `app.py` | app | the decisions: tray menu, events, when to alert, chime, remind, record; settings applied live |
+| `vision.py` | app | the eyes: camera to NPU to posture call, 2 fps, on its own thread; camera off while locked |
 | `camera.py` | app | webcam, black-frame check, resize for the model |
-| `posture.py` | app | metrics vs your baseline, 30 s alert rule, calibration |
+| `posture.py` | app | metrics vs your baseline, the strictness presets, 30 s alert rule, calibration |
 | `breaks.py` | app | hourly walk logic, "I walked", snooze |
 | `stats.py` | app | per-minute posture stats, day / week report, coach summary, export |
-| `statswindow.py` | app | the Stats window |
-| `glass.py` | app | window frame for Stats and the walk card: dark, rounded, no title bar, drag to move |
-| `liquid.py` | app | smoked-glass tiles, bars and capsule buttons (Pillow, drawn once and cached) |
+| `overlays.py` | app | on screen: edge glow, pill, walk flash and card, first-run welcome |
+| `window.py` | app | the one window: Stats and Settings tabs |
+| `glass.py` | app | window frame for the window and the walk card: dark, rounded, no title bar, drag to move |
+| `liquid.py` | app | smoked-glass tiles, bars, capsule buttons, slider and switches (Pillow, drawn once and cached) |
+| `winsys.py` | app | Windows plumbing: screen locked?, start with Windows, one copy at a time |
 | `engine.py` | app | plans and starts the NPU host, checks the NPU report |
 | `hardware.py` | app | NPU from the registry (ComputeAccelerator class), Ryzen AI install and Python |
 | `doctor.py` | app | the checklist |

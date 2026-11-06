@@ -74,3 +74,16 @@ def test_brief_slump_never_alerts(tmp_path):
         alerts = [p.update(SLOUCH, FRAME)[1] for _ in range(20 * FPS)]
         alerts += [p.update(UPRIGHT, FRAME)[1] for _ in range(10 * FPS)]
         assert not any(alerts)
+
+
+def test_strictness_moves_the_slouch_line(tmp_path):
+    # A pose whose eyes dropped about 5%: a slouch at Normal (96%), fine at Easy (94%)
+    mild = pose(eye_y=0.40 + 0.35 * 0.05)
+    p = calibrated(tmp_path)
+    assert p.update(mild, FRAME)[0] == "slouch"
+    p.set_strictness(1)                        # Easy
+    states = [p.update(mild, FRAME)[0] for _ in range(5)]
+    assert states[-1] == "good"
+    p.set_strictness(4)                        # Strict
+    assert p.update(mild, FRAME)[0] == "slouch"
+    assert [name for name, *_ in posture.STRICTNESS][posture.NORMAL] == "Normal"
