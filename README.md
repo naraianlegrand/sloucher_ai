@@ -52,7 +52,7 @@ Measured on an AMD Ryzen 7040 laptop (Phoenix NPU, 16 logical CPUs):
 |---|---|
 | Model operators on the NPU | **96.5%** (1,042 of 1,080, INT8 YOLOv8n-pose) |
 | Time per frame on the NPU | **12-17 ms** |
-| Whole app, camera included | **0.8% CPU**, ~480 MB |
+| Whole app, camera included | **about 1% CPU** (0.8-1.05% measured, of which the webcam driver alone is ~0.7%), ~490 MB |
 | Shoulders found in the right place at a desk | **100%** of frames in every front-facing test clip (MoveNet: ~0%) |
 | Slouch, lean-in and head-down clips that alert | **3 of 3**, and no false alarm on the 6 good clips |
 | Installer | **39 MB**, no admin rights |
